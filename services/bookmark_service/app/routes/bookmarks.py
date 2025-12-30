@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select, func, desc, asc
 from uuid import UUID
-from typing import Literal
+from typing import Literal, Optional
+from datetime import datetime, timezone
 from app.database import get_db
 from app.models.bookmark import Bookmark
 from app.schemas.bookmark import (
@@ -15,6 +16,7 @@ from app.schemas.bookmark import (
 from app.config import get_settings
 from app.dependencies import get_current_user_id
 from app.kafka import get_kafka_producer
+from app.kafka.producer import KafkaEventProducer
 
 settings = get_settings()
 router = APIRouter(prefix="/bookmarks", tags=["bookmarks"])
@@ -30,8 +32,8 @@ async def create_bookmark(
     bookmark: BookmarkCreate,
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_current_user_id),
-    kafka_producer = Depends(get_kafka_producer)
-):
+    kafka_producer: Optional[KafkaEventProducer] = Depends(get_kafka_producer)
+) -> BookmarkResponse:
     """
     Create a new bookmark with the following fields:
     - **url**: Valid HTTP/HTTPS URL (must be unique per user)
@@ -90,7 +92,7 @@ async def list_bookmarks(
     ),
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_current_user_id)
-):
+) -> BookmarkListResponse:
     """
     Retrieve a paginated list of bookmarks for the authenticated user.
 
@@ -146,7 +148,7 @@ async def get_bookmark(
     bookmark_id: UUID,
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_current_user_id)
-):
+) -> BookmarkResponse:
     """
     Retrieve a specific bookmark by its UUID.
 
@@ -179,8 +181,8 @@ async def update_bookmark(
     bookmark_update: BookmarkUpdate,
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_current_user_id),
-    kafka_producer = Depends(get_kafka_producer)
-):
+    kafka_producer: Optional[KafkaEventProducer] = Depends(get_kafka_producer)
+) -> BookmarkResponse:
     """
     Update an existing bookmark. Supports partial updates.
 
@@ -218,7 +220,6 @@ async def update_bookmark(
             setattr(bookmark, field, value)
 
         # Manually update changed_time for databases that don't support onupdate
-        from datetime import datetime, timezone
         bookmark.changed_time = datetime.now(timezone.utc)
 
         await db.commit()
@@ -249,8 +250,8 @@ async def delete_bookmark(
     bookmark_id: UUID,
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_current_user_id),
-    kafka_producer = Depends(get_kafka_producer)
-):
+    kafka_producer: Optional[KafkaEventProducer] = Depends(get_kafka_producer)
+) -> None:
     """
     Delete a bookmark by its UUID.
 

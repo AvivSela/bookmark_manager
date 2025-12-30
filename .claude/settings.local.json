@@ -29,7 +29,9 @@
       "Bash(./run_tests.sh:*)",
       "Bash(.venv/bin/python -m pytest tests/test_kafka_events.py -v)",
       "Bash(.venv/bin/pip install:*)",
-      "Bash(docker-compose up:*)"
+      "Bash(docker-compose up:*)",
+      "Bash(python -c:*)",
+      "Bash(.venv/bin/pytest tests/ -v --tb=short)"
     ]
   }
 }

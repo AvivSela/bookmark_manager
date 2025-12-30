@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
+from typing import AsyncGenerator
 from app.config import get_settings
 
 settings = get_settings()
@@ -9,8 +10,8 @@ engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,  # Log SQL in debug mode
     pool_pre_ping=True,    # Verify connections before using
-    pool_size=5,           # Number of connections in pool
-    max_overflow=10        # Max connections beyond pool_size
+    pool_size=settings.db_pool_size,      # Number of connections in pool
+    max_overflow=settings.db_max_overflow # Max connections beyond pool_size
 )
 
 # Session factory
@@ -24,7 +25,7 @@ async_session_maker = async_sessionmaker(
 Base = declarative_base()
 
 
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Dependency for route handlers to get database session.
 

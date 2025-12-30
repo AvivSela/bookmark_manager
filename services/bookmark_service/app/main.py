@@ -40,7 +40,7 @@ app = FastAPI(
 
 # Exception handlers
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
     """Handle validation errors with detailed error messages."""
     # Convert errors to JSON-serializable format
     errors = []
@@ -68,7 +68,7 @@ app.include_router(bookmarks.router)
 
 # Root endpoint
 @app.get("/")
-async def root():
+async def root() -> dict[str, str]:
     """API information endpoint."""
     return {
         "name": settings.app_name,

@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
+import logging
 from app.database import get_db
 
 router = APIRouter(tags=["health"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("/health")
-async def health_check(db: AsyncSession = Depends(get_db)):
+async def health_check(db: AsyncSession = Depends(get_db)) -> dict[str, str]:
     """
     Health check endpoint that verifies:
     - API is running
@@ -22,8 +24,17 @@ async def health_check(db: AsyncSession = Depends(get_db)):
             "database": "connected"
         }
     except Exception as e:
+        # Log the detailed error server-side
+        logger.error(
+            "Health check failed - database connection error",
+            extra={
+                "error": str(e),
+                "error_type": type(e).__name__
+            },
+            exc_info=True
+        )
+        # Return generic error to client (no sensitive information)
         return {
             "status": "unhealthy",
-            "database": "disconnected",
-            "error": str(e)
+            "database": "disconnected"
         }

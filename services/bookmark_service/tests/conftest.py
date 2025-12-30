@@ -113,12 +113,17 @@ async def client(test_db: AsyncSession, test_user_id: str) -> AsyncGenerator[Asy
 
 @pytest.fixture
 def authenticated_client(test_db: AsyncSession):
-    """
-    Factory to create clients with different user IDs for multi-tenancy testing.
+    """Factory to create clients with different user IDs for multi-tenancy testing.
 
     Usage:
         client1 = await authenticated_client("user-1")
         client2 = await authenticated_client("user-2")
+
+    Args:
+        test_db: Test database session.
+
+    Returns:
+        Callable that creates AsyncClient instances with custom user IDs.
     """
     async def _create_client(user_id: str) -> AsyncClient:
         async def override_get_db():
@@ -137,10 +142,10 @@ def authenticated_client(test_db: AsyncSession):
 
 @pytest.fixture
 def sample_bookmark_data() -> dict:
-    """
-    Factory fixture for generating sample bookmark data.
+    """Provide sample bookmark data for testing.
 
-    Returns a dict with valid bookmark fields for testing.
+    Returns:
+        dict: Dictionary with valid bookmark fields (url, title, description).
     """
     return {
         "url": "https://example.com",
@@ -151,8 +156,7 @@ def sample_bookmark_data() -> dict:
 
 @pytest.fixture
 async def create_bookmark(test_db: AsyncSession):
-    """
-    Helper fixture to create bookmarks directly in the test database.
+    """Helper fixture to create bookmarks directly in the test database.
 
     Usage:
         bookmark = await create_bookmark(
@@ -161,11 +165,17 @@ async def create_bookmark(test_db: AsyncSession):
             description="Description",
             user_id="test-user-123"
         )
+
+    Args:
+        test_db: Test database session.
+
+    Returns:
+        Callable that creates Bookmark instances in the database.
     """
     async def _create_bookmark(
         url: str = "https://example.com",
         title: str = "Test Bookmark",
-        description: str = None,
+        description: Optional[str] = None,
         user_id: str = "test-user-123"
     ) -> Bookmark:
         bookmark = Bookmark(
@@ -184,10 +194,13 @@ async def create_bookmark(test_db: AsyncSession):
 
 @pytest.fixture
 def mock_kafka_producer():
-    """
-    Mock Kafka producer to prevent actual Kafka connections in tests.
+    """Mock Kafka producer to prevent actual Kafka connections in tests.
 
-    Returns a list that collects all published events for assertion.
+    Returns:
+        list: List that collects all published events for assertion.
+
+    Yields:
+        list: Published events accumulator for test assertions.
     """
     published_events = []
 

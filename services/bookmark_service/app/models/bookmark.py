@@ -1,6 +1,8 @@
 from sqlalchemy import Column, String, Text, DateTime, Index, TypeDecorator, CHAR, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.engine import Dialect
 from sqlalchemy.sql import func
+from typing import Optional, Any
 import uuid
 from app.database import Base
 
@@ -14,13 +16,30 @@ class GUID(TypeDecorator):
     impl = CHAR
     cache_ok = True
 
-    def load_dialect_impl(self, dialect):
+    def load_dialect_impl(self, dialect: Dialect) -> Any:
+        """Load the appropriate dialect implementation for this type.
+
+        Args:
+            dialect: The SQLAlchemy dialect being used.
+
+        Returns:
+            Type descriptor for PostgreSQL UUID or CHAR(36) depending on dialect.
+        """
         if dialect.name == 'postgresql':
             return dialect.type_descriptor(PG_UUID(as_uuid=True))
         else:
             return dialect.type_descriptor(CHAR(36))
 
-    def process_bind_param(self, value, dialect):
+    def process_bind_param(self, value: Optional[uuid.UUID | str], dialect: Dialect) -> Optional[str | uuid.UUID]:
+        """Process a value being sent to the database.
+
+        Args:
+            value: UUID value to bind, either as UUID object or string.
+            dialect: The SQLAlchemy dialect being used.
+
+        Returns:
+            Processed value: UUID for PostgreSQL, string for other databases.
+        """
         if value is None:
             return value
         elif dialect.name == 'postgresql':
@@ -31,7 +50,16 @@ class GUID(TypeDecorator):
             else:
                 return str(value)
 
-    def process_result_value(self, value, dialect):
+    def process_result_value(self, value: Optional[str | uuid.UUID], dialect: Dialect) -> Optional[uuid.UUID]:
+        """Process a value received from the database.
+
+        Args:
+            value: Raw value from database (UUID or string).
+            dialect: The SQLAlchemy dialect being used.
+
+        Returns:
+            UUID object, or None if value was None.
+        """
         if value is None:
             return value
         else:
@@ -92,5 +120,5 @@ class Bookmark(Base):
         UniqueConstraint('user_id', 'url', name='uq_user_url'),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Bookmark(id={self.id}, url={self.url}, title={self.title})>"

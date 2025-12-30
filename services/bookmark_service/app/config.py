@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     default_page_size: int = 50
     max_page_size: int = 100
 
+    # Database connection pool settings
+    db_pool_size: int = 5
+    db_max_overflow: int = 10
+
     # Kafka configuration
     kafka_bootstrap_servers: str = "bookmark-kafka:9092"
     kafka_topic_prefix: str = "bookmarks"

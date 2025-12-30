@@ -21,9 +21,12 @@ class BookmarkBase(BaseModel):
 
 
 class BookmarkCreate(BookmarkBase):
-    """Request schema for creating bookmarks."""
+    """Request schema for creating bookmarks.
 
-    pass
+    Inherits all fields from BookmarkBase without modifications.
+    This class exists to provide semantic clarity and allow for future
+    create-specific validations or fields if needed.
+    """
 
 
 class BookmarkUpdate(BaseModel):
