@@ -1,0 +1,246 @@
+# Bookmark Service
+
+A microservices-based bookmark management application using Kafka and PostgreSQL.
+
+## Prerequisites
+
+- Docker Desktop or Docker Engine (20.10+)
+- Docker Compose (2.0+)
+
+## Quick Start
+
+### 1. Environment Setup
+
+Copy the example environment file and customize if needed:
+
+```bash
+cp .env.example .env
+```
+
+Edit [.env](.env) to change default passwords and ports.
+
+### 2. Start Services
+
+Start all services in detached mode:
+
+```bash
+docker-compose up -d
+```
+
+Wait for services to be healthy (30-60 seconds):
+
+```bash
+docker-compose ps
+```
+
+### 3. Access Services
+
+Once running, you can access:
+
+- **PostgreSQL Database**: `localhost:5432`
+  - User: `bookmark_user` (configurable in [.env](.env))
+  - Password: `bookmark_pass` (configurable in [.env](.env))
+  - Database: `bookmark_db`
+
+- **pgAdmin (PostgreSQL UI)**: http://localhost:5050
+  - Email: `admin@bookmark.local` (configurable in [.env](.env))
+  - Password: `admin` (configurable in [.env](.env))
+
+- **Kafka Broker**: `localhost:9092`
+  - For application connections
+
+- **Kafdrop (Kafka UI)**: http://localhost:9000
+  - View topics, messages, and consumer groups
+
+## Common Commands
+
+### View Logs
+
+```bash
+# All services
+docker-compose logs -f
+
+# Specific service
+docker-compose logs -f kafka
+docker-compose logs -f postgres
+```
+
+### Stop Services
+
+```bash
+# Stop but keep data
+docker-compose down
+
+# Stop and remove all data (clean slate)
+docker-compose down -v
+```
+
+### Restart Services
+
+```bash
+# Restart all
+docker-compose restart
+
+# Restart specific service
+docker-compose restart kafka
+```
+
+### Check Service Status
+
+```bash
+docker-compose ps
+```
+
+## Connecting to PostgreSQL
+
+### Using psql
+
+```bash
+docker exec -it bookmark-postgres psql -U bookmark_user -d bookmark_db
+```
+
+### Using pgAdmin
+
+1. Open http://localhost:5050
+2. Login with credentials from [.env](.env)
+3. Right-click "Servers" → "Register" → "Server"
+4. General tab: Name = "Bookmark DB"
+5. Connection tab:
+   - Host: `postgres` (service name)
+   - Port: `5432`
+   - Username: `bookmark_user`
+   - Password: `bookmark_pass`
+
+## Working with Kafka
+
+### Using Kafka CLI Tools
+
+```bash
+# List topics
+docker exec -it bookmark-kafka kafka-topics.sh --bootstrap-server localhost:9092 --list
+
+# Create a topic
+docker exec -it bookmark-kafka kafka-topics.sh --bootstrap-server localhost:9092 --create --topic my-topic --partitions 3 --replication-factor 1
+
+# Describe topic
+docker exec -it bookmark-kafka kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic my-topic
+
+# Produce messages
+docker exec -it bookmark-kafka kafka-console-producer.sh --bootstrap-server localhost:9092 --topic my-topic
+
+# Consume messages
+docker exec -it bookmark-kafka kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic my-topic --from-beginning
+```
+
+### Using Kafdrop UI
+
+1. Open http://localhost:9000
+2. Browse topics, view messages, and monitor consumer groups
+3. No authentication required
+
+## Architecture
+
+### Services
+
+- **PostgreSQL 16**: Primary database with Alpine Linux base
+- **Kafka 3.x**: Message broker using KRaft mode (no Zookeeper)
+- **Kafdrop**: Web UI for Kafka management
+- **pgAdmin 4**: Web UI for PostgreSQL administration
+
+### Data Persistence
+
+All data is stored in Docker named volumes:
+
+- `postgres_data`: Database files
+- `kafka_data`: Kafka logs and topics
+- `pgadmin_data`: pgAdmin configuration
+
+Data persists across `docker-compose down` but is removed with `docker-compose down -v`.
+
+### Networking
+
+All services communicate via the `bookmark-network` bridge network. Services can reach each other using their service names (e.g., `kafka`, `postgres`).
+
+## Configuration
+
+### Environment Variables
+
+All configuration is in [.env](.env). See [.env.example](.env.example) for available options.
+
+### Port Customization
+
+Change ports in [.env](.env):
+
+```env
+POSTGRES_PORT=5432
+KAFKA_PORT=9092
+KAFDROP_PORT=9000
+PGADMIN_PORT=5050
+```
+
+### Resource Limits
+
+For production, consider adding resource limits to [docker-compose.yml](docker-compose.yml):
+
+```yaml
+services:
+  kafka:
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+```
+
+## Troubleshooting
+
+### Services Won't Start
+
+1. Check if ports are already in use:
+   ```bash
+   lsof -i :5432  # PostgreSQL
+   lsof -i :9092  # Kafka
+   ```
+
+2. Check service logs:
+   ```bash
+   docker-compose logs kafka
+   ```
+
+### Kafka Connection Issues
+
+- Ensure Kafka is healthy: `docker-compose ps kafka`
+- Wait 30-60 seconds after startup for Kafka to be ready
+- Check Kafka logs: `docker-compose logs kafka`
+
+### PostgreSQL Connection Issues
+
+- Verify credentials in [.env](.env) match your connection string
+- Check PostgreSQL logs: `docker-compose logs postgres`
+
+### Reset Everything
+
+To start fresh:
+
+```bash
+docker-compose down -v
+docker-compose up -d
+```
+
+## Security Notes
+
+- Default credentials are for **development only**
+- Change all passwords in [.env](.env) for production
+- Never commit [.env](.env) to version control (already in [.gitignore](.gitignore))
+- Use Docker secrets or a secrets manager for production
+
+## Next Steps
+
+- Add your application service to [docker-compose.yml](docker-compose.yml)
+- Create database migrations
+- Set up Kafka topics and schemas
+- Implement your bookmark service logic
+
+## License
+
+[Your License Here]
