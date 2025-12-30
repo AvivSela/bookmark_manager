@@ -1,0 +1,27 @@
+# Kafka
+aiokafka==0.10.0
+
+# Database
+sqlalchemy==2.0.25
+asyncpg==0.29.0
+
+# HTTP and HTML parsing
+httpx==0.25.2
+beautifulsoup4==4.12.3
+lxml==5.1.0
+
+# Configuration
+pydantic==2.5.3
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+
+# Retry logic
+tenacity==8.2.3
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+faker==22.0.0
+aiosqlite==0.19.0
+respx==0.20.2
