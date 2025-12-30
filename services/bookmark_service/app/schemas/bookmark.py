@@ -36,6 +36,15 @@ class BookmarkUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=500)
     description: Optional[str] = Field(None, max_length=5000)
 
+    # Enrichment fields (populated by enrichment service)
+    og_title: Optional[str] = Field(None, max_length=500)
+    og_description: Optional[str] = Field(None, max_length=5000)
+    og_image: Optional[str] = Field(None, max_length=2048)
+    og_type: Optional[str] = Field(None, max_length=100)
+    og_site_name: Optional[str] = Field(None, max_length=200)
+    meta_description: Optional[str] = Field(None, max_length=5000)
+    favicon_url: Optional[str] = Field(None, max_length=2048)
+
     @field_validator('title', mode='after')
     @classmethod
     def title_must_not_be_empty(cls, v: Optional[str]) -> Optional[str]:
