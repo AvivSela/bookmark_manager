@@ -33,7 +33,8 @@
       "Bash(python -c:*)",
       "Bash(.venv/bin/pytest tests/ -v --tb=short)",
       "Bash(pip3 install:*)",
-      "Bash(sudo docker cp:*)"
+      "Bash(sudo docker cp:*)",
+      "Bash(docker-compose down:*)"
     ]
   }
 }

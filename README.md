@@ -37,6 +37,15 @@ docker compose ps
 
 Once running, you can access:
 
+- **Bookmark Service API**: http://localhost:8000
+  - REST API for bookmark CRUD operations
+  - Interactive docs: http://localhost:8000/docs
+  - Health check: http://localhost:8000/health
+
+- **Enrichment Service**: http://localhost:8001
+  - Kafka consumer for bookmark enrichment
+  - Health check: http://localhost:8001/health
+
 - **PostgreSQL Database**: `localhost:5432`
   - User: `bookmark_user` (configurable in [.env](.env))
   - Password: `bookmark_pass` (configurable in [.env](.env))
@@ -148,10 +157,37 @@ docker exec -it bookmark-kafka kafka-console-consumer.sh --bootstrap-server loca
 
 ### Services
 
+- **Bookmark Service**: FastAPI REST API for bookmark CRUD operations with Kafka event publishing
+- **Enrichment Service**: Kafka consumer that enriches bookmarks with Open Graph metadata
 - **PostgreSQL 16**: Primary database with Alpine Linux base
 - **Kafka 3.x**: Message broker using KRaft mode (no Zookeeper)
 - **Kafdrop**: Web UI for Kafka management
 - **pgAdmin 4**: Web UI for PostgreSQL administration
+
+### Service Communication
+
+```
+┌─────────────────┐     Kafka Events      ┌──────────────────┐
+│  Bookmark API   │ ──────────────────────>│  Enrichment Svc  │
+│   (Port 8000)   │  bookmark.created      │   (Port 8001)    │
+└────────┬────────┘                        └────────┬─────────┘
+         │                                          │
+         │               PostgreSQL                 │
+         └──────────────────┬───────────────────────┘
+                            │
+                     ┌──────▼───────┐
+                     │  PostgreSQL  │
+                     │  (Port 5432) │
+                     └──────────────┘
+```
+
+**Event Flow:**
+1. User creates bookmark via Bookmark API
+2. Bookmark saved to PostgreSQL
+3. `bookmarks.bookmark.created` event published to Kafka
+4. Enrichment Service consumes event
+5. Enrichment Service fetches Open Graph metadata
+6. Enrichment Service updates bookmark with metadata
 
 ### Data Persistence
 
@@ -255,12 +291,17 @@ docker compose up -d
 - Never commit [.env](.env) to version control (already in [.gitignore](.gitignore))
 - Use Docker secrets or a secrets manager for production
 
+## Service Documentation
+
+- **Bookmark Service**: See [services/bookmark_service/README.md](services/bookmark_service/README.md)
+- **Enrichment Service**: See [services/enrichment_service/README.md](services/enrichment_service/README.md)
+
 ## Next Steps
 
-- Add your application service to [docker-compose.yml](docker-compose.yml)
-- Create database migrations
-- Set up Kafka topics and schemas
-- Implement your bookmark service logic
+- Explore the interactive API documentation at http://localhost:8000/docs
+- Monitor Kafka topics and messages in Kafdrop
+- Use pgAdmin to view enriched bookmark data
+- Add additional microservices following the existing patterns
 
 ## License
 

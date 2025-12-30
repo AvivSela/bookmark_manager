@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, DateTime, Index, TypeDecorator, CHAR, UniqueConstraint
+from sqlalchemy import Column, String, Text, DateTime, Integer, Index, TypeDecorator, CHAR, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.engine import Dialect
 from sqlalchemy.sql import func
@@ -113,10 +113,20 @@ class Bookmark(Base):
     # Enrichment fields - Favicon
     favicon_url = Column(String(2048), nullable=True)
 
+    # Validation fields
+    validation_status = Column(String(20), nullable=True)  # 'valid', 'invalid', 'pending', 'error'
+    validation_last_checked = Column(DateTime(timezone=True), nullable=True)
+    validation_http_status = Column(Integer, nullable=True)  # HTTP status code
+    validation_final_url = Column(String(2048), nullable=True)  # Final URL after redirects
+    validation_error_message = Column(Text, nullable=True)  # Error details
+
     # Indexes and constraints for multi-tenancy
     __table_args__ = (
         Index('idx_bookmark_created_time', 'created_time'),
         Index('idx_user_bookmarks', 'user_id', 'created_time'),
+        Index('idx_validation_status', 'validation_status'),
+        Index('idx_validation_last_checked', 'validation_last_checked'),
+        Index('idx_pending_validation', 'validation_status', 'validation_last_checked'),
         UniqueConstraint('user_id', 'url', name='uq_user_url'),
     )
 

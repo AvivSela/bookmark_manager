@@ -45,6 +45,13 @@ class BookmarkUpdate(BaseModel):
     meta_description: Optional[str] = Field(None, max_length=5000)
     favicon_url: Optional[str] = Field(None, max_length=2048)
 
+    # Validation fields (populated by validation service)
+    validation_status: Optional[str] = Field(None, max_length=20)
+    validation_last_checked: Optional[datetime] = None
+    validation_http_status: Optional[int] = None
+    validation_final_url: Optional[str] = Field(None, max_length=2048)
+    validation_error_message: Optional[str] = None
+
     @field_validator('title', mode='after')
     @classmethod
     def title_must_not_be_empty(cls, v: Optional[str]) -> Optional[str]:
@@ -61,6 +68,22 @@ class BookmarkResponse(BookmarkBase):
     user_id: str
     created_time: datetime
     changed_time: datetime
+
+    # Enrichment fields
+    og_title: Optional[str] = None
+    og_description: Optional[str] = None
+    og_image: Optional[str] = None
+    og_type: Optional[str] = None
+    og_site_name: Optional[str] = None
+    meta_description: Optional[str] = None
+    favicon_url: Optional[str] = None
+
+    # Validation fields
+    validation_status: Optional[str] = None
+    validation_last_checked: Optional[datetime] = None
+    validation_http_status: Optional[int] = None
+    validation_final_url: Optional[str] = None
+    validation_error_message: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)  # Enable ORM mode
 

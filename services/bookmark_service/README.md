@@ -5,10 +5,14 @@ A FastAPI-based REST API service for managing bookmarks with full CRUD operation
 ## Features
 
 - **Full CRUD Operations**: Create, Read, Update, and Delete bookmarks
+- **Multi-tenancy**: User-scoped bookmarks with user_id field
 - **Pagination**: Efficient pagination with configurable page sizes
 - **Sorting**: Sort by created_time, changed_time, or title in ascending/descending order
 - **URL Validation**: Automatic validation of bookmark URLs
-- **Unique Constraints**: Prevents duplicate URLs
+- **Unique Constraints**: Prevents duplicate URLs per user
+- **Kafka Event Publishing**: Publishes bookmark.created events for downstream services
+- **Enrichment Support**: Stores Open Graph metadata (title, description, image, etc.)
+- **Validation Tracking**: Tracks URL validation status and results
 - **PostgreSQL**: Production database with async support
 - **Auto-generated Docs**: Interactive API documentation via Swagger UI and ReDoc
 - **Health Check Endpoint**: Monitor service status
@@ -20,6 +24,7 @@ A FastAPI-based REST API service for managing bookmarks with full CRUD operation
 - **Database**: PostgreSQL (production), SQLite (testing)
 - **ORM**: SQLAlchemy 2.0.25 (async)
 - **Validation**: Pydantic 2.5.3
+- **Message Broker**: Kafka (via aiokafka)
 - **Server**: Uvicorn
 - **Testing**: pytest, pytest-asyncio, httpx
 
@@ -38,16 +43,21 @@ bookmark_service/
 │   ├── schemas/
 │   │   ├── __init__.py
 │   │   └── bookmark.py      # Pydantic schemas for validation
-│   └── routes/
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   ├── bookmarks.py     # Bookmark CRUD endpoints
+│   │   └── health.py        # Health check endpoint
+│   └── kafka/
 │       ├── __init__.py
-│       ├── bookmarks.py     # Bookmark CRUD endpoints
-│       └── health.py        # Health check endpoint
+│       ├── producer.py      # Kafka event producer
+│       └── schemas.py       # Kafka event schemas
 ├── tests/
 │   ├── __init__.py
 │   ├── conftest.py          # Test fixtures and configuration
 │   ├── test_bookmark_crud.py
 │   ├── test_pagination.py
-│   └── test_validation.py
+│   ├── test_validation.py
+│   └── test_kafka_events.py # Kafka integration tests
 ├── .env.test                # Test environment variables
 ├── requirements.txt         # Python dependencies
 ├── pytest.ini              # Pytest configuration
@@ -177,11 +187,20 @@ Configuration is managed through environment variables defined in [app/config.py
 
 | Variable | Description | Default |
 |----------|-------------|---------|
+| **Database** | | |
 | `POSTGRES_USER` | Database username | Required |
 | `POSTGRES_PASSWORD` | Database password | Required |
 | `POSTGRES_DB` | Database name | Required |
 | `POSTGRES_HOST` | Database host | `postgres` |
 | `POSTGRES_PORT` | Database port | `5432` |
+| **Kafka** | | |
+| `KAFKA_BOOTSTRAP_SERVERS` | Kafka broker address | `bookmark-kafka:9092` |
+| `KAFKA_TOPIC_PREFIX` | Topic prefix for events | `bookmarks` |
+| `KAFKA_ENABLED` | Enable/disable Kafka publishing | `true` |
+| `KAFKA_COMPRESSION_TYPE` | Event compression type | `gzip` |
+| `KAFKA_MAX_RETRIES` | Max retry attempts for publishing | `3` |
+| `KAFKA_REQUEST_TIMEOUT_MS` | Kafka request timeout | `30000` |
+| **Application** | | |
 | `DEBUG` | Debug mode | `false` |
 
 ## API Usage Examples
@@ -232,12 +251,38 @@ curl -X DELETE http://localhost:8000/bookmarks/{bookmark_id}
 
 | Field | Type | Description |
 |-------|------|-------------|
+| **Core Fields** | | |
 | `id` | UUID | Primary key (auto-generated) |
-| `url` | String | Bookmark URL (unique, required) |
+| `user_id` | String | User identifier for multi-tenancy (required, indexed) |
+| `url` | String | Bookmark URL (max 2048 chars, required, indexed) |
 | `title` | String | Bookmark title (1-500 chars, required) |
-| `description` | String | Optional description (max 5000 chars) |
-| `created_time` | DateTime | Timestamp when created (auto-generated) |
+| `description` | Text | Optional description (max 5000 chars) |
+| `created_time` | DateTime | Timestamp when created (auto-generated, indexed) |
 | `changed_time` | DateTime | Timestamp when last updated (auto-updated) |
+| **Enrichment Fields** | | |
+| `og_title` | String | Open Graph title (max 500 chars) |
+| `og_description` | Text | Open Graph description (max 5000 chars) |
+| `og_image` | String | Open Graph image URL (max 2048 chars) |
+| `og_type` | String | Open Graph type (max 100 chars) |
+| `og_site_name` | String | Open Graph site name (max 200 chars) |
+| `meta_description` | Text | Meta description fallback (max 5000 chars) |
+| `favicon_url` | String | Favicon URL (max 2048 chars) |
+| **Validation Fields** | | |
+| `validation_status` | String | Status: 'valid', 'invalid', 'pending', 'error' (max 20 chars, indexed) |
+| `validation_last_checked` | DateTime | Last validation timestamp (indexed) |
+| `validation_http_status` | Integer | HTTP status code from validation |
+| `validation_final_url` | String | Final URL after redirects (max 2048 chars) |
+| `validation_error_message` | Text | Error details if validation failed |
+
+**Indexes:**
+- `idx_bookmark_created_time` on `created_time`
+- `idx_user_bookmarks` on `(user_id, created_time)`
+- `idx_validation_status` on `validation_status`
+- `idx_validation_last_checked` on `validation_last_checked`
+- `idx_pending_validation` on `(validation_status, validation_last_checked)`
+
+**Constraints:**
+- `uq_user_url`: Unique constraint on `(user_id, url)` - prevents duplicate URLs per user
 
 ## Development
 
@@ -256,6 +301,41 @@ The codebase follows these principles:
 2. Define schemas in [app/schemas/bookmark.py](app/schemas/bookmark.py) if needed
 3. Add tests in `tests/`
 4. Update this README if adding major features
+
+### Kafka Event Publishing
+
+The service publishes events to Kafka when bookmarks are created:
+
+**Topic:** `bookmarks.bookmark.created`
+
+**Event Schema:**
+```json
+{
+  "event_id": "uuid",
+  "event_type": "bookmark.created",
+  "timestamp": "ISO 8601 datetime",
+  "data": {
+    "bookmark_id": "uuid",
+    "user_id": "string",
+    "url": "string",
+    "title": "string",
+    "description": "string|null"
+  },
+  "metadata": {
+    "service": "bookmark-service",
+    "version": "1.0.0"
+  }
+}
+```
+
+**Downstream Consumers:**
+- **Enrichment Service**: Fetches Open Graph metadata and updates bookmark
+- **Validation Service** (planned): Validates URL accessibility
+
+**Configuration:**
+- Set `KAFKA_ENABLED=false` to disable event publishing (useful for testing)
+- Events are compressed using gzip by default
+- Failed publishes are retried up to 3 times
 
 ## Troubleshooting
 
