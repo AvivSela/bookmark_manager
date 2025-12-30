@@ -31,7 +31,9 @@
       "Bash(.venv/bin/pip install:*)",
       "Bash(docker-compose up:*)",
       "Bash(python -c:*)",
-      "Bash(.venv/bin/pytest tests/ -v --tb=short)"
+      "Bash(.venv/bin/pytest tests/ -v --tb=short)",
+      "Bash(pip3 install:*)",
+      "Bash(sudo docker cp:*)"
     ]
   }
 }

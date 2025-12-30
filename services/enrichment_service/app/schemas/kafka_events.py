@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Dict, Any
 from datetime import datetime
 from uuid import UUID
@@ -16,8 +16,4 @@ class BookmarkEvent(BaseModel):
     data: Dict[str, Any]  # Contains bookmark data
     metadata: Dict[str, str]  # service, version
 
-    class Config:
-        json_encoders = {
-            UUID: str,
-            datetime: lambda v: v.isoformat()
-        }
+    model_config = ConfigDict()

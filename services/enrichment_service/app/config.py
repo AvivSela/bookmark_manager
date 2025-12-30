@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
     debug: bool = False
 
+    # Server configuration
+    host: str = "0.0.0.0"
+    port: int = 8001
+
     # Database configuration
     postgres_user: str
     postgres_password: str
@@ -33,6 +37,11 @@ class Settings(BaseSettings):
     enrichment_backoff_multiplier: float = 2.0
     user_agent: str = "BookmarkEnricher/1.0 (+https://example.com/bot)"
 
+    # Bookmark Service configuration
+    bookmark_service_host: str = "bookmark-service"
+    bookmark_service_port: int = 8000
+    bookmark_service_timeout_seconds: int = 10
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -46,6 +55,11 @@ class Settings(BaseSettings):
             f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
+
+    @property
+    def bookmark_service_url(self) -> str:
+        """Construct bookmark service base URL."""
+        return f"http://{self.bookmark_service_host}:{self.bookmark_service_port}"
 
 
 @lru_cache

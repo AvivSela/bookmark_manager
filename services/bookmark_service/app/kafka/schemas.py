@@ -27,12 +27,7 @@ class BookmarkEvent(BaseModel):
         description="Event metadata"
     )
 
-    model_config = ConfigDict(
-        json_encoders={
-            UUID: str,
-            datetime: lambda v: v.isoformat()
-        }
-    )
+    model_config = ConfigDict()
 
     def to_json_dict(self) -> Dict[str, Any]:
         """

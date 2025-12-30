@@ -20,5 +20,12 @@ USER appuser
 
 ENV PATH=/home/appuser/.local/bin:$PATH
 
-# Run consumer
+# Expose health check port
+EXPOSE 8001
+
+# Health check using new endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"
+
+# Run service
 CMD ["python", "-m", "app.main"]

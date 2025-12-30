@@ -3,14 +3,11 @@ from aiokafka.errors import KafkaError
 import json
 import logging
 from uuid import UUID
-from sqlalchemy import update
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_settings
 from app.schemas.kafka_events import BookmarkEvent
-from app.models.bookmark import Bookmark
 from app.enrichers.metadata_fetcher import MetadataFetcher
 from app.enrichers.retry_handler import EnrichmentRetryHandler
-from app.database import async_session_maker
+from app.enrichers.bookmark_service_client import BookmarkServiceClient
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -23,6 +20,7 @@ class BookmarkEnrichmentConsumer:
         self.consumer = None
         self.fetcher = MetadataFetcher()
         self.retry_handler = EnrichmentRetryHandler()
+        self.bookmark_client = BookmarkServiceClient()
 
     async def start(self):
         """Start Kafka consumer."""
@@ -65,42 +63,33 @@ class BookmarkEnrichmentConsumer:
             raise
 
     async def _enrich_bookmark(self, event: BookmarkEvent):
-        """Enrich a single bookmark."""
-        async with async_session_maker() as db:
-            try:
-                # Extract URL from event data
-                url = event.data.get('url')
-                bookmark_id = event.data.get('id')
+        """Enrich a single bookmark via Bookmark Service API."""
+        try:
+            # Extract event data
+            url = event.data.get('url')
+            bookmark_id = event.data.get('id')
+            user_id = event.data.get('user_id')
 
-                if not url or not bookmark_id:
-                    logger.error(f"Missing url or id in event data: {event.data}")
-                    return
+            if not url or not bookmark_id or not user_id:
+                logger.error(f"Missing required fields in event: url={url}, id={bookmark_id}, user_id={user_id}")
+                return
 
-                # Fetch metadata with retry
-                enrichment_result = await self.retry_handler.fetch_with_retry(
-                    self.fetcher,
-                    url
-                )
+            # Fetch metadata with retry
+            enrichment_result = await self.retry_handler.fetch_with_retry(
+                self.fetcher,
+                url
+            )
 
-                # Update database
-                stmt = (
-                    update(Bookmark)
-                    .where(Bookmark.id == UUID(bookmark_id))
-                    .values(
-                        og_title=enrichment_result.og_title,
-                        og_description=enrichment_result.og_description,
-                        og_image=enrichment_result.og_image,
-                        og_type=enrichment_result.og_type,
-                        og_site_name=enrichment_result.og_site_name,
-                        meta_description=enrichment_result.meta_description,
-                        favicon_url=enrichment_result.favicon_url
-                    )
-                )
-                await db.execute(stmt)
-                await db.commit()
+            # Update bookmark via API with retry
+            await self.retry_handler.update_with_retry(
+                self.bookmark_client,
+                UUID(bookmark_id),
+                user_id,
+                enrichment_result
+            )
 
-                logger.info(f"Successfully enriched bookmark {bookmark_id}")
+            logger.info(f"Successfully enriched bookmark {bookmark_id}")
 
-            except Exception as e:
-                # Log error but don't update bookmark (leave fields as NULL)
-                logger.error(f"Failed to enrich bookmark {event.data.get('id')}: {e}")
+        except Exception as e:
+            # Log error but continue processing (don't crash consumer)
+            logger.error(f"Failed to enrich bookmark {event.data.get('id')}: {e}")
