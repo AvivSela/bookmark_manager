@@ -9,16 +9,16 @@ settings = get_settings()
 engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,  # Log SQL in debug mode
-    pool_pre_ping=True,    # Verify connections before using
-    pool_size=settings.db_pool_size,      # Number of connections in pool
-    max_overflow=settings.db_max_overflow # Max connections beyond pool_size
+    pool_pre_ping=True,  # Verify connections before using
+    pool_size=settings.db_pool_size,  # Number of connections in pool
+    max_overflow=settings.db_max_overflow,  # Max connections beyond pool_size
 )
 
 # Session factory
 async_session_maker = async_sessionmaker(
     engine,
     class_=AsyncSession,
-    expire_on_commit=False  # Don't expire objects after commit
+    expire_on_commit=False,  # Don't expire objects after commit
 )
 
 # Base class for models

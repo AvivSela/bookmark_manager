@@ -15,9 +15,7 @@ class URLValidator:
 
     def __init__(self):
         self.timeout = httpx.Timeout(settings.validation_timeout_seconds)
-        self.headers = {
-            'User-Agent': settings.validation_user_agent
-        }
+        self.headers = {"User-Agent": settings.validation_user_agent}
 
     async def validate_url(self, bookmark_id: UUID, url: str) -> ValidationResult:
         """
@@ -40,9 +38,7 @@ class URLValidator:
         """
         try:
             async with httpx.AsyncClient(
-                timeout=self.timeout,
-                follow_redirects=True,
-                max_redirects=5
+                timeout=self.timeout, follow_redirects=True, max_redirects=5
             ) as client:
                 # Try HEAD first (lightweight, no body download)
                 logger.info(f"Validating URL {url} for bookmark {bookmark_id}")
@@ -74,7 +70,7 @@ class URLValidator:
                     http_status=response.status_code,
                     final_url=final_url,
                     error_message=None,
-                    checked_at=datetime.utcnow()
+                    checked_at=datetime.utcnow(),
                 )
 
         except httpx.TimeoutException as e:
@@ -86,7 +82,7 @@ class URLValidator:
                 http_status=None,
                 final_url=None,
                 error_message=f"Request timeout after {settings.validation_timeout_seconds}s",
-                checked_at=datetime.utcnow()
+                checked_at=datetime.utcnow(),
             )
 
         except httpx.NetworkError as e:
@@ -98,7 +94,7 @@ class URLValidator:
                 http_status=None,
                 final_url=None,
                 error_message=f"Network error: {str(e)}",
-                checked_at=datetime.utcnow()
+                checked_at=datetime.utcnow(),
             )
 
         except Exception as e:
@@ -110,5 +106,5 @@ class URLValidator:
                 http_status=None,
                 final_url=None,
                 error_message=f"Unexpected error: {str(e)}",
-                checked_at=datetime.utcnow()
+                checked_at=datetime.utcnow(),
             )

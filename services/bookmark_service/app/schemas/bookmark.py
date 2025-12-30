@@ -1,4 +1,11 @@
-from pydantic import BaseModel, HttpUrl, Field, ConfigDict, field_validator, ValidationError
+from pydantic import (
+    BaseModel,
+    HttpUrl,
+    Field,
+    ConfigDict,
+    field_validator,
+    ValidationError,
+)
 from datetime import datetime
 from uuid import UUID
 from typing import Optional
@@ -11,12 +18,12 @@ class BookmarkBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=500)
     description: Optional[str] = Field(None, max_length=5000)
 
-    @field_validator('title', mode='after')
+    @field_validator("title", mode="after")
     @classmethod
     def title_must_not_be_empty(cls, v: str) -> str:
         """Validate that title is not empty or whitespace-only."""
         if v and not v.strip():
-            raise ValueError('Title cannot be empty or whitespace-only')
+            raise ValueError("Title cannot be empty or whitespace-only")
         return v
 
 
@@ -52,12 +59,12 @@ class BookmarkUpdate(BaseModel):
     validation_final_url: Optional[str] = Field(None, max_length=2048)
     validation_error_message: Optional[str] = None
 
-    @field_validator('title', mode='after')
+    @field_validator("title", mode="after")
     @classmethod
     def title_must_not_be_empty(cls, v: Optional[str]) -> Optional[str]:
         """Validate that title is not empty or whitespace-only when provided."""
         if v is not None and v and not v.strip():
-            raise ValueError('Title cannot be empty or whitespace-only')
+            raise ValueError("Title cannot be empty or whitespace-only")
         return v
 
 

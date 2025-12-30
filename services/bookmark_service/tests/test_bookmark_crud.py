@@ -39,7 +39,7 @@ class TestBookmarkCRUD:
         bookmark_a_data = {
             "url": "https://example.com",
             "title": "Bookmark A",
-            "description": "First bookmark"
+            "description": "First bookmark",
         }
         response_a = await client.post("/bookmarks", json=bookmark_a_data)
         assert response_a.status_code == 201
@@ -48,7 +48,7 @@ class TestBookmarkCRUD:
         bookmark_b_data = {
             "url": "https://test.com",
             "title": "Bookmark B",
-            "description": "Second bookmark"
+            "description": "Second bookmark",
         }
         response_b = await client.post("/bookmarks", json=bookmark_b_data)
         assert response_b.status_code == 201
@@ -56,9 +56,14 @@ class TestBookmarkCRUD:
 
         # Attempt to update bookmark B's URL to bookmark A's URL
         update_data = {"url": "https://example.com"}
-        response_update = await client.put(f"/bookmarks/{bookmark_b_id}", json=update_data)
+        response_update = await client.put(
+            f"/bookmarks/{bookmark_b_id}", json=update_data
+        )
         assert response_update.status_code == 409
-        assert "A bookmark with this URL already exists" in response_update.json()["detail"]
+        assert (
+            "A bookmark with this URL already exists"
+            in response_update.json()["detail"]
+        )
 
     @pytest.mark.asyncio
     async def test_update_bookmark_auto_updates_changed_time(
@@ -83,7 +88,9 @@ class TestBookmarkCRUD:
 
         # Update the bookmark
         update_data = {"title": "Updated Title"}
-        response_update = await client.put(f"/bookmarks/{bookmark_id}", json=update_data)
+        response_update = await client.put(
+            f"/bookmarks/{bookmark_id}", json=update_data
+        )
         assert response_update.status_code == 200
         updated_bookmark = response_update.json()
         updated_changed_time = datetime.fromisoformat(
@@ -145,7 +152,9 @@ class TestBookmarkCRUD:
         assert "user_id" in created_bookmark
         assert created_bookmark["user_id"] == "test-user-123"
         # Pydantic's HttpUrl adds trailing slash - compare normalized URLs
-        assert created_bookmark["url"].rstrip("/") == sample_bookmark_data["url"].rstrip("/")
+        assert created_bookmark["url"].rstrip("/") == sample_bookmark_data[
+            "url"
+        ].rstrip("/")
         assert created_bookmark["title"] == sample_bookmark_data["title"]
         assert created_bookmark["description"] == sample_bookmark_data["description"]
         assert "created_time" in created_bookmark
@@ -178,7 +187,7 @@ class TestBookmarkCRUD:
         original_data = {
             "url": "https://example.com",
             "title": "Original Title",
-            "description": "Original Description"
+            "description": "Original Description",
         }
         response_create = await client.post("/bookmarks", json=original_data)
         assert response_create.status_code == 201
@@ -188,15 +197,21 @@ class TestBookmarkCRUD:
 
         # Update only the title
         update_data = {"title": "Updated Title"}
-        response_update = await client.put(f"/bookmarks/{bookmark_id}", json=update_data)
+        response_update = await client.put(
+            f"/bookmarks/{bookmark_id}", json=update_data
+        )
         assert response_update.status_code == 200
         updated_bookmark = response_update.json()
 
         # Verify only title was updated
         assert updated_bookmark["title"] == "Updated Title"
         # Pydantic's HttpUrl adds trailing slash - compare normalized URLs
-        assert updated_bookmark["url"].rstrip("/") == original_data["url"].rstrip("/")  # Unchanged
-        assert updated_bookmark["description"] == original_data["description"]  # Unchanged
+        assert updated_bookmark["url"].rstrip("/") == original_data["url"].rstrip(
+            "/"
+        )  # Unchanged
+        assert (
+            updated_bookmark["description"] == original_data["description"]
+        )  # Unchanged
 
         # Verify created_time remains unchanged, but changed_time was updated
         assert updated_bookmark["created_time"] == original_created_time

@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 
 class BookmarkEventType(str, Enum):
     """Types of bookmark events"""
+
     CREATED = "created"
     UPDATED = "updated"
     DELETED = "deleted"
@@ -17,14 +18,14 @@ class BookmarkEvent(BaseModel):
 
     event_id: UUID = Field(default_factory=uuid4, description="Unique event identifier")
     event_type: str = Field(..., description="Type of event (created/updated/deleted)")
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Event timestamp in UTC")
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Event timestamp in UTC",
+    )
     data: Dict[str, Any] = Field(..., description="Event payload with bookmark data")
     metadata: Dict[str, str] = Field(
-        default_factory=lambda: {
-            "service": "bookmark-service",
-            "version": "1.0.0"
-        },
-        description="Event metadata"
+        default_factory=lambda: {"service": "bookmark-service", "version": "1.0.0"},
+        description="Event metadata",
     )
 
     model_config = ConfigDict()
@@ -40,5 +41,5 @@ class BookmarkEvent(BaseModel):
             "event_type": self.event_type,
             "timestamp": self.timestamp.isoformat(),
             "data": self.data,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }

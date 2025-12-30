@@ -1,4 +1,14 @@
-from sqlalchemy import Column, String, Text, DateTime, Integer, Index, TypeDecorator, CHAR, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    String,
+    Text,
+    DateTime,
+    Integer,
+    Index,
+    TypeDecorator,
+    CHAR,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.engine import Dialect
 from sqlalchemy.sql import func
@@ -13,6 +23,7 @@ class GUID(TypeDecorator):
     Uses PostgreSQL's UUID type when available, otherwise uses
     CHAR(36), storing as stringified hex values.
     """
+
     impl = CHAR
     cache_ok = True
 
@@ -25,12 +36,14 @@ class GUID(TypeDecorator):
         Returns:
             Type descriptor for PostgreSQL UUID or CHAR(36) depending on dialect.
         """
-        if dialect.name == 'postgresql':
+        if dialect.name == "postgresql":
             return dialect.type_descriptor(PG_UUID(as_uuid=True))
         else:
             return dialect.type_descriptor(CHAR(36))
 
-    def process_bind_param(self, value: Optional[uuid.UUID | str], dialect: Dialect) -> Optional[str | uuid.UUID]:
+    def process_bind_param(
+        self, value: Optional[uuid.UUID | str], dialect: Dialect
+    ) -> Optional[str | uuid.UUID]:
         """Process a value being sent to the database.
 
         Args:
@@ -42,7 +55,7 @@ class GUID(TypeDecorator):
         """
         if value is None:
             return value
-        elif dialect.name == 'postgresql':
+        elif dialect.name == "postgresql":
             return value
         else:
             if not isinstance(value, uuid.UUID):
@@ -50,7 +63,9 @@ class GUID(TypeDecorator):
             else:
                 return str(value)
 
-    def process_result_value(self, value: Optional[str | uuid.UUID], dialect: Dialect) -> Optional[uuid.UUID]:
+    def process_result_value(
+        self, value: Optional[str | uuid.UUID], dialect: Dialect
+    ) -> Optional[uuid.UUID]:
         """Process a value received from the database.
 
         Args:
@@ -89,15 +104,13 @@ class Bookmark(Base):
 
     # Timestamps with automatic updates
     created_time = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=False
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     changed_time = Column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
-        nullable=False
+        nullable=False,
     )
 
     # Enrichment fields - Open Graph metadata
@@ -114,20 +127,24 @@ class Bookmark(Base):
     favicon_url = Column(String(2048), nullable=True)
 
     # Validation fields
-    validation_status = Column(String(20), nullable=True)  # 'valid', 'invalid', 'pending', 'error'
+    validation_status = Column(
+        String(20), nullable=True
+    )  # 'valid', 'invalid', 'pending', 'error'
     validation_last_checked = Column(DateTime(timezone=True), nullable=True)
     validation_http_status = Column(Integer, nullable=True)  # HTTP status code
-    validation_final_url = Column(String(2048), nullable=True)  # Final URL after redirects
+    validation_final_url = Column(
+        String(2048), nullable=True
+    )  # Final URL after redirects
     validation_error_message = Column(Text, nullable=True)  # Error details
 
     # Indexes and constraints for multi-tenancy
     __table_args__ = (
-        Index('idx_bookmark_created_time', 'created_time'),
-        Index('idx_user_bookmarks', 'user_id', 'created_time'),
-        Index('idx_validation_status', 'validation_status'),
-        Index('idx_validation_last_checked', 'validation_last_checked'),
-        Index('idx_pending_validation', 'validation_status', 'validation_last_checked'),
-        UniqueConstraint('user_id', 'url', name='uq_user_url'),
+        Index("idx_bookmark_created_time", "created_time"),
+        Index("idx_user_bookmarks", "user_id", "created_time"),
+        Index("idx_validation_status", "validation_status"),
+        Index("idx_validation_last_checked", "validation_last_checked"),
+        Index("idx_pending_validation", "validation_status", "validation_last_checked"),
+        UniqueConstraint("user_id", "url", name="uq_user_url"),
     )
 
     def __repr__(self) -> str:

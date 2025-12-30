@@ -38,9 +38,9 @@ class EnrichmentRetryHandler:
         wait=wait_exponential(
             multiplier=settings.enrichment_backoff_multiplier,
             min=settings.enrichment_initial_retry_delay,
-            max=settings.enrichment_max_retry_delay
+            max=settings.enrichment_max_retry_delay,
         ),
-        reraise=True
+        reraise=True,
     )
     async def fetch_with_retry(self, fetcher, url: str):
         """
@@ -55,7 +55,9 @@ class EnrichmentRetryHandler:
         except httpx.HTTPStatusError as e:
             # Don't retry 4xx errors (client errors)
             if 400 <= e.response.status_code < 500:
-                logger.warning(f"Non-retryable HTTP error {e.response.status_code} for {url}")
+                logger.warning(
+                    f"Non-retryable HTTP error {e.response.status_code} for {url}"
+                )
                 raise
             # Retry 5xx errors
             logger.warning(f"Retrying after HTTP {e.response.status_code} for {url}")
@@ -67,11 +69,13 @@ class EnrichmentRetryHandler:
         wait=wait_exponential(
             multiplier=settings.enrichment_backoff_multiplier,
             min=settings.enrichment_initial_retry_delay,
-            max=settings.enrichment_max_retry_delay
+            max=settings.enrichment_max_retry_delay,
         ),
-        reraise=True
+        reraise=True,
     )
-    async def update_with_retry(self, client, bookmark_id: UUID, user_id: str, enrichment_result):
+    async def update_with_retry(
+        self, client, bookmark_id: UUID, user_id: str, enrichment_result
+    ):
         """
         Update bookmark via API with retry logic.
 
@@ -86,12 +90,18 @@ class EnrichmentRetryHandler:
             - Immediately on 4xx errors (client errors, no retry)
         """
         try:
-            return await client.update_bookmark_enrichment(bookmark_id, user_id, enrichment_result)
+            return await client.update_bookmark_enrichment(
+                bookmark_id, user_id, enrichment_result
+            )
         except httpx.HTTPStatusError as e:
             # Don't retry 4xx errors (client errors)
             if 400 <= e.response.status_code < 500:
-                logger.warning(f"Non-retryable HTTP error {e.response.status_code} updating bookmark {bookmark_id}")
+                logger.warning(
+                    f"Non-retryable HTTP error {e.response.status_code} updating bookmark {bookmark_id}"
+                )
                 raise
             # Retry 5xx errors
-            logger.warning(f"Retrying after HTTP {e.response.status_code} for bookmark {bookmark_id}")
+            logger.warning(
+                f"Retrying after HTTP {e.response.status_code} for bookmark {bookmark_id}"
+            )
             raise

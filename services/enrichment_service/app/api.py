@@ -21,7 +21,7 @@ app = FastAPI(
     description="Bookmark Enrichment Service - Health Check API",
     lifespan=lifespan,
     docs_url=None,  # Disable swagger UI for minimal footprint
-    redoc_url=None  # Disable redoc UI for minimal footprint
+    redoc_url=None,  # Disable redoc UI for minimal footprint
 )
 
 # Include health router
@@ -36,5 +36,5 @@ async def root() -> dict[str, str]:
         "name": settings.app_name,
         "version": settings.app_version,
         "description": "Bookmark enrichment service",
-        "health": "/health"
+        "health": "/health",
     }

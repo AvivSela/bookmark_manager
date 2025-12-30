@@ -43,9 +43,7 @@ class Settings(BaseSettings):
     bookmark_service_timeout_seconds: int = 10
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False
     )
 
     @property

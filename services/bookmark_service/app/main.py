@@ -33,14 +33,16 @@ app = FastAPI(
     Multiple users can bookmark the same URL without conflicts.
     """,
     lifespan=lifespan,
-    docs_url="/docs",      # Swagger UI
-    redoc_url="/redoc"     # ReDoc UI
+    docs_url="/docs",  # Swagger UI
+    redoc_url="/redoc",  # ReDoc UI
 )
 
 
 # Exception handlers
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     """Handle validation errors with detailed error messages."""
     # Convert errors to JSON-serializable format
     errors = []
@@ -48,7 +50,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         error_dict = {
             "loc": list(error.get("loc", [])),
             "msg": str(error.get("msg", "")),
-            "type": str(error.get("type", ""))
+            "type": str(error.get("type", "")),
         }
         # Add input if it exists
         if "input" in error:
@@ -56,8 +58,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         errors.append(error_dict)
 
     return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        content={"detail": errors}
+        status_code=status.HTTP_400_BAD_REQUEST, content={"detail": errors}
     )
 
 
@@ -76,5 +77,5 @@ async def root() -> dict[str, str]:
         "description": "Bookmark management API",
         "docs": "/docs",
         "redoc": "/redoc",
-        "health": "/health"
+        "health": "/health",
     }

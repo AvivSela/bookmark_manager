@@ -11,7 +11,7 @@ from app.schemas.bookmark import (
     BookmarkCreate,
     BookmarkUpdate,
     BookmarkResponse,
-    BookmarkListResponse
+    BookmarkListResponse,
 )
 from app.config import get_settings
 from app.dependencies import get_current_user_id
@@ -26,13 +26,13 @@ router = APIRouter(prefix="/bookmarks", tags=["bookmarks"])
     "",
     response_model=BookmarkResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Create a new bookmark"
+    summary="Create a new bookmark",
 )
 async def create_bookmark(
     bookmark: BookmarkCreate,
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_current_user_id),
-    kafka_producer: Optional[KafkaEventProducer] = Depends(get_kafka_producer)
+    kafka_producer: Optional[KafkaEventProducer] = Depends(get_kafka_producer),
 ) -> BookmarkResponse:
     """
     Create a new bookmark with the following fields:
@@ -45,8 +45,8 @@ async def create_bookmark(
     try:
         # Convert Pydantic model to dict and ensure URL is string
         bookmark_data = bookmark.model_dump()
-        bookmark_data['url'] = str(bookmark_data['url'])
-        bookmark_data['user_id'] = user_id
+        bookmark_data["url"] = str(bookmark_data["url"])
+        bookmark_data["user_id"] = user_id
 
         db_bookmark = Bookmark(**bookmark_data)
         db.add(db_bookmark)
@@ -57,7 +57,9 @@ async def create_bookmark(
         if kafka_producer:
             await kafka_producer.publish_event(
                 event_type="created",
-                bookmark_data=BookmarkResponse.model_validate(db_bookmark).model_dump(mode='json')
+                bookmark_data=BookmarkResponse.model_validate(db_bookmark).model_dump(
+                    mode="json"
+                ),
             )
 
         return db_bookmark
@@ -65,14 +67,14 @@ async def create_bookmark(
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="A bookmark with this URL already exists"
+            detail="A bookmark with this URL already exists",
         )
 
 
 @router.get(
     "",
     response_model=BookmarkListResponse,
-    summary="List all bookmarks with pagination"
+    summary="List all bookmarks with pagination",
 )
 async def list_bookmarks(
     page: int = Query(1, ge=1, description="Page number"),
@@ -80,18 +82,14 @@ async def list_bookmarks(
         settings.default_page_size,
         ge=1,
         le=settings.max_page_size,
-        description=f"Items per page (max {settings.max_page_size})"
+        description=f"Items per page (max {settings.max_page_size})",
     ),
     sort_by: Literal["created_time", "changed_time", "title"] = Query(
-        "created_time",
-        description="Field to sort by"
+        "created_time", description="Field to sort by"
     ),
-    sort_order: Literal["asc", "desc"] = Query(
-        "desc",
-        description="Sort order"
-    ),
+    sort_order: Literal["asc", "desc"] = Query("desc", description="Sort order"),
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user_id)
+    user_id: str = Depends(get_current_user_id),
 ) -> BookmarkListResponse:
     """
     Retrieve a paginated list of bookmarks for the authenticated user.
@@ -105,8 +103,8 @@ async def list_bookmarks(
     Requires X-User-ID header for authentication.
     """
     # Get total count for user
-    count_query = select(func.count()).select_from(Bookmark).where(
-        Bookmark.user_id == user_id
+    count_query = (
+        select(func.count()).select_from(Bookmark).where(Bookmark.user_id == user_id)
     )
     total_result = await db.execute(count_query)
     total = total_result.scalar()
@@ -135,19 +133,19 @@ async def list_bookmarks(
         total=total,
         page=page,
         page_size=page_size,
-        total_pages=total_pages
+        total_pages=total_pages,
     )
 
 
 @router.get(
     "/{bookmark_id}",
     response_model=BookmarkResponse,
-    summary="Get a single bookmark by ID"
+    summary="Get a single bookmark by ID",
 )
 async def get_bookmark(
     bookmark_id: UUID,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user_id)
+    user_id: str = Depends(get_current_user_id),
 ) -> BookmarkResponse:
     """
     Retrieve a specific bookmark by its UUID.
@@ -156,8 +154,7 @@ async def get_bookmark(
     Requires X-User-ID header for authentication.
     """
     query = select(Bookmark).where(
-        Bookmark.id == bookmark_id,
-        Bookmark.user_id == user_id
+        Bookmark.id == bookmark_id, Bookmark.user_id == user_id
     )
     result = await db.execute(query)
     bookmark = result.scalar_one_or_none()
@@ -165,23 +162,21 @@ async def get_bookmark(
     if not bookmark:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Bookmark with id '{bookmark_id}' not found"
+            detail=f"Bookmark with id '{bookmark_id}' not found",
         )
 
     return bookmark
 
 
 @router.put(
-    "/{bookmark_id}",
-    response_model=BookmarkResponse,
-    summary="Update a bookmark"
+    "/{bookmark_id}", response_model=BookmarkResponse, summary="Update a bookmark"
 )
 async def update_bookmark(
     bookmark_id: UUID,
     bookmark_update: BookmarkUpdate,
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_current_user_id),
-    kafka_producer: Optional[KafkaEventProducer] = Depends(get_kafka_producer)
+    kafka_producer: Optional[KafkaEventProducer] = Depends(get_kafka_producer),
 ) -> BookmarkResponse:
     """
     Update an existing bookmark. Supports partial updates.
@@ -196,8 +191,7 @@ async def update_bookmark(
     """
     # Get existing bookmark for user
     query = select(Bookmark).where(
-        Bookmark.id == bookmark_id,
-        Bookmark.user_id == user_id
+        Bookmark.id == bookmark_id, Bookmark.user_id == user_id
     )
     result = await db.execute(query)
     bookmark = result.scalar_one_or_none()
@@ -205,15 +199,15 @@ async def update_bookmark(
     if not bookmark:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Bookmark with id '{bookmark_id}' not found"
+            detail=f"Bookmark with id '{bookmark_id}' not found",
         )
 
     # Update fields
     update_data = bookmark_update.model_dump(exclude_unset=True)
 
     # Convert URL to string if present
-    if 'url' in update_data:
-        update_data['url'] = str(update_data['url'])
+    if "url" in update_data:
+        update_data["url"] = str(update_data["url"])
 
     try:
         for field, value in update_data.items():
@@ -229,7 +223,9 @@ async def update_bookmark(
         if kafka_producer:
             await kafka_producer.publish_event(
                 event_type="updated",
-                bookmark_data=BookmarkResponse.model_validate(bookmark).model_dump(mode='json')
+                bookmark_data=BookmarkResponse.model_validate(bookmark).model_dump(
+                    mode="json"
+                ),
             )
 
         return bookmark
@@ -237,20 +233,20 @@ async def update_bookmark(
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="A bookmark with this URL already exists"
+            detail="A bookmark with this URL already exists",
         )
 
 
 @router.delete(
     "/{bookmark_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete a bookmark"
+    summary="Delete a bookmark",
 )
 async def delete_bookmark(
     bookmark_id: UUID,
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_current_user_id),
-    kafka_producer: Optional[KafkaEventProducer] = Depends(get_kafka_producer)
+    kafka_producer: Optional[KafkaEventProducer] = Depends(get_kafka_producer),
 ) -> None:
     """
     Delete a bookmark by its UUID.
@@ -259,8 +255,7 @@ async def delete_bookmark(
     Requires X-User-ID header for authentication.
     """
     query = select(Bookmark).where(
-        Bookmark.id == bookmark_id,
-        Bookmark.user_id == user_id
+        Bookmark.id == bookmark_id, Bookmark.user_id == user_id
     )
     result = await db.execute(query)
     bookmark = result.scalar_one_or_none()
@@ -268,14 +263,14 @@ async def delete_bookmark(
     if not bookmark:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Bookmark with id '{bookmark_id}' not found"
+            detail=f"Bookmark with id '{bookmark_id}' not found",
         )
 
     # Capture minimal data before deletion for event
     bookmark_data = {
         "id": str(bookmark.id),
         "user_id": bookmark.user_id,
-        "url": str(bookmark.url)
+        "url": str(bookmark.url),
     }
 
     await db.delete(bookmark)
@@ -284,6 +279,5 @@ async def delete_bookmark(
     # Publish bookmark.deleted event
     if kafka_producer:
         await kafka_producer.publish_event(
-            event_type="deleted",
-            bookmark_data=bookmark_data
+            event_type="deleted", bookmark_data=bookmark_data
         )

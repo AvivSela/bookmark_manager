@@ -30,10 +30,7 @@ async def test_validate_url_redirect(validator, mock_bookmark_id):
     with respx.mock:
         # Mock redirect: HEAD to original URL returns 301, then follows to final URL
         respx.head(original_url).mock(
-            return_value=httpx.Response(
-                301,
-                headers={"Location": final_url}
-            )
+            return_value=httpx.Response(301, headers={"Location": final_url})
         )
         respx.head(final_url).mock(return_value=httpx.Response(200))
 
@@ -44,8 +41,7 @@ async def test_validate_url_redirect(validator, mock_bookmark_id):
             return_value=httpx.Response(
                 200,
                 headers={},
-
- # Final response after redirect
+                # Final response after redirect
             )
         )
         # Override to simulate redirect
@@ -57,10 +53,7 @@ async def test_validate_url_redirect(validator, mock_bookmark_id):
 
         # Simpler approach: mock the client behavior
         respx.head(original_url).mock(
-            return_value=httpx.Response(
-                200,
-                request=httpx.Request("HEAD", final_url)
-            )
+            return_value=httpx.Response(200, request=httpx.Request("HEAD", final_url))
         )
 
         result = await validator.validate_url(mock_bookmark_id, original_url)
@@ -106,9 +99,7 @@ async def test_validate_url_network_error(validator, mock_bookmark_id):
     url = "https://unreachable.example.com"
 
     with respx.mock:
-        respx.head(url).mock(
-            side_effect=httpx.NetworkError("Network unreachable")
-        )
+        respx.head(url).mock(side_effect=httpx.NetworkError("Network unreachable"))
 
         result = await validator.validate_url(mock_bookmark_id, url)
 

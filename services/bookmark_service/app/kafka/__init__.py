@@ -4,6 +4,7 @@ Kafka module for event-driven architecture.
 Provides Kafka producer for publishing bookmark events
 (created, updated, deleted) with best-effort delivery.
 """
+
 import logging
 from typing import Optional
 from app.kafka.producer import KafkaEventProducer
@@ -26,6 +27,7 @@ async def init_kafka() -> None:
 
     try:
         from app.config import get_settings
+
         settings = get_settings()
 
         if not settings.kafka_enabled:
@@ -37,7 +39,7 @@ async def init_kafka() -> None:
             topic_prefix=settings.kafka_topic_prefix,
             compression_type=settings.kafka_compression_type,
             max_retries=settings.kafka_max_retries,
-            request_timeout_ms=settings.kafka_request_timeout_ms
+            request_timeout_ms=settings.kafka_request_timeout_ms,
         )
 
         await _kafka_producer.start()
@@ -46,7 +48,7 @@ async def init_kafka() -> None:
         logger.error(
             "Failed to initialize Kafka",
             extra={"error": str(e), "error_type": type(e).__name__},
-            exc_info=True
+            exc_info=True,
         )
         # Don't raise - allow application to start without Kafka
         _kafka_producer = None
@@ -86,5 +88,5 @@ __all__ = [
     "BookmarkEventType",
     "init_kafka",
     "shutdown_kafka",
-    "get_kafka_producer"
+    "get_kafka_producer",
 ]

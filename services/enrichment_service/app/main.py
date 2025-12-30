@@ -7,8 +7,7 @@ import uvicorn
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -52,16 +51,13 @@ class EnrichmentService:
         # Setup signal handlers
         for sig in (signal.SIGTERM, signal.SIGINT):
             asyncio.get_event_loop().add_signal_handler(
-                sig,
-                lambda: asyncio.create_task(self.shutdown())
+                sig, lambda: asyncio.create_task(self.shutdown())
             )
 
         try:
             # Run both FastAPI server and consumer concurrently
             await asyncio.gather(
-                self.run_uvicorn(),
-                self.run_consumer(),
-                return_exceptions=True
+                self.run_uvicorn(), self.run_consumer(), return_exceptions=True
             )
         except asyncio.CancelledError:
             logger.info("Service cancelled")

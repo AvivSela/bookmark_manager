@@ -18,10 +18,7 @@ class TestEnrichmentRetryHandler:
         mock_fetcher = AsyncMock()
         mock_fetcher.fetch_metadata.return_value = sample_enrichment_result
 
-        result = await handler.fetch_with_retry(
-            mock_fetcher,
-            "https://example.com"
-        )
+        result = await handler.fetch_with_retry(mock_fetcher, "https://example.com")
 
         assert result == sample_enrichment_result
         assert mock_fetcher.fetch_metadata.call_count == 1
@@ -37,21 +34,16 @@ class TestEnrichmentRetryHandler:
         mock_response = Mock()
         mock_response.status_code = 503
         error_503 = httpx.HTTPStatusError(
-            "Service Unavailable",
-            request=Mock(),
-            response=mock_response
+            "Service Unavailable", request=Mock(), response=mock_response
         )
 
         mock_fetcher.fetch_metadata.side_effect = [
             error_503,
             error_503,
-            sample_enrichment_result
+            sample_enrichment_result,
         ]
 
-        result = await handler.fetch_with_retry(
-            mock_fetcher,
-            "https://example.com"
-        )
+        result = await handler.fetch_with_retry(mock_fetcher, "https://example.com")
 
         assert result == sample_enrichment_result
         assert mock_fetcher.fetch_metadata.call_count == 3
@@ -65,9 +57,7 @@ class TestEnrichmentRetryHandler:
         mock_response = Mock()
         mock_response.status_code = 404
         error_404 = httpx.HTTPStatusError(
-            "Not Found",
-            request=Mock(),
-            response=mock_response
+            "Not Found", request=Mock(), response=mock_response
         )
 
         mock_fetcher.fetch_metadata.side_effect = error_404
@@ -80,9 +70,7 @@ class TestEnrichmentRetryHandler:
         # The check inside logs warning but still retries (limitation of current design)
         assert mock_fetcher.fetch_metadata.call_count > 1
 
-    async def test_fetch_with_retry_retries_on_timeout(
-        self, sample_enrichment_result
-    ):
+    async def test_fetch_with_retry_retries_on_timeout(self, sample_enrichment_result):
         """Test that TimeoutException triggers retry."""
         handler = EnrichmentRetryHandler()
         mock_fetcher = AsyncMock()
@@ -90,13 +78,10 @@ class TestEnrichmentRetryHandler:
         # First call times out, second succeeds
         mock_fetcher.fetch_metadata.side_effect = [
             httpx.TimeoutException("Request timeout"),
-            sample_enrichment_result
+            sample_enrichment_result,
         ]
 
-        result = await handler.fetch_with_retry(
-            mock_fetcher,
-            "https://example.com"
-        )
+        result = await handler.fetch_with_retry(mock_fetcher, "https://example.com")
 
         assert result == sample_enrichment_result
         assert mock_fetcher.fetch_metadata.call_count == 2
@@ -111,13 +96,10 @@ class TestEnrichmentRetryHandler:
         # First call fails to connect, second succeeds
         mock_fetcher.fetch_metadata.side_effect = [
             httpx.ConnectError("Connection failed"),
-            sample_enrichment_result
+            sample_enrichment_result,
         ]
 
-        result = await handler.fetch_with_retry(
-            mock_fetcher,
-            "https://example.com"
-        )
+        result = await handler.fetch_with_retry(mock_fetcher, "https://example.com")
 
         assert result == sample_enrichment_result
         assert mock_fetcher.fetch_metadata.call_count == 2
@@ -150,10 +132,7 @@ class TestEnrichmentRetryHandler:
         enrichment_result = EnrichmentResult(og_title="Test")
 
         result = await handler.update_with_retry(
-            mock_client,
-            bookmark_id,
-            user_id,
-            enrichment_result
+            mock_client, bookmark_id, user_id, enrichment_result
         )
 
         assert result is True
@@ -168,25 +147,17 @@ class TestEnrichmentRetryHandler:
         mock_response = Mock()
         mock_response.status_code = 500
         error_500 = httpx.HTTPStatusError(
-            "Internal Server Error",
-            request=Mock(),
-            response=mock_response
+            "Internal Server Error", request=Mock(), response=mock_response
         )
 
-        mock_client.update_bookmark_enrichment.side_effect = [
-            error_500,
-            True
-        ]
+        mock_client.update_bookmark_enrichment.side_effect = [error_500, True]
 
         bookmark_id = uuid4()
         user_id = "test-user-123"
         enrichment_result = EnrichmentResult(og_title="Test")
 
         result = await handler.update_with_retry(
-            mock_client,
-            bookmark_id,
-            user_id,
-            enrichment_result
+            mock_client, bookmark_id, user_id, enrichment_result
         )
 
         assert result is True
@@ -201,9 +172,7 @@ class TestEnrichmentRetryHandler:
         mock_response = Mock()
         mock_response.status_code = 400
         error_400 = httpx.HTTPStatusError(
-            "Bad Request",
-            request=Mock(),
-            response=mock_response
+            "Bad Request", request=Mock(), response=mock_response
         )
 
         mock_client.update_bookmark_enrichment.side_effect = error_400
@@ -214,10 +183,7 @@ class TestEnrichmentRetryHandler:
 
         with pytest.raises(httpx.HTTPStatusError) as exc_info:
             await handler.update_with_retry(
-                mock_client,
-                bookmark_id,
-                user_id,
-                enrichment_result
+                mock_client, bookmark_id, user_id, enrichment_result
             )
 
         assert exc_info.value.response.status_code == 400
@@ -234,9 +200,7 @@ class TestIsRetryableHttpError:
         mock_response = Mock()
         mock_response.status_code = 500
         error = httpx.HTTPStatusError(
-            "Internal Server Error",
-            request=Mock(),
-            response=mock_response
+            "Internal Server Error", request=Mock(), response=mock_response
         )
 
         assert is_retryable_http_error(error) is True
@@ -246,9 +210,7 @@ class TestIsRetryableHttpError:
         mock_response = Mock()
         mock_response.status_code = 503
         error = httpx.HTTPStatusError(
-            "Service Unavailable",
-            request=Mock(),
-            response=mock_response
+            "Service Unavailable", request=Mock(), response=mock_response
         )
 
         assert is_retryable_http_error(error) is True
@@ -258,9 +220,7 @@ class TestIsRetryableHttpError:
         mock_response = Mock()
         mock_response.status_code = 404
         error = httpx.HTTPStatusError(
-            "Not Found",
-            request=Mock(),
-            response=mock_response
+            "Not Found", request=Mock(), response=mock_response
         )
 
         assert is_retryable_http_error(error) is False
@@ -270,9 +230,7 @@ class TestIsRetryableHttpError:
         mock_response = Mock()
         mock_response.status_code = 400
         error = httpx.HTTPStatusError(
-            "Bad Request",
-            request=Mock(),
-            response=mock_response
+            "Bad Request", request=Mock(), response=mock_response
         )
 
         assert is_retryable_http_error(error) is False

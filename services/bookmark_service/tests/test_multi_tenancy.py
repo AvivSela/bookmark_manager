@@ -101,28 +101,26 @@ class TestMultiTenancy:
         await client2.aclose()
 
     @pytest.mark.asyncio
-    async def test_list_only_returns_users_bookmarks(
-        self, authenticated_client
-    ):
+    async def test_list_only_returns_users_bookmarks(self, authenticated_client):
         """List endpoint only returns bookmarks for the authenticated user."""
         client1 = await authenticated_client("user-1")
         client2 = await authenticated_client("user-2")
 
         # User 1 creates 2 bookmarks
-        await client1.post("/bookmarks", json={
-            "url": "https://example1.com",
-            "title": "User 1 Bookmark 1"
-        })
-        await client1.post("/bookmarks", json={
-            "url": "https://example2.com",
-            "title": "User 1 Bookmark 2"
-        })
+        await client1.post(
+            "/bookmarks",
+            json={"url": "https://example1.com", "title": "User 1 Bookmark 1"},
+        )
+        await client1.post(
+            "/bookmarks",
+            json={"url": "https://example2.com", "title": "User 1 Bookmark 2"},
+        )
 
         # User 2 creates 1 bookmark
-        await client2.post("/bookmarks", json={
-            "url": "https://example3.com",
-            "title": "User 2 Bookmark"
-        })
+        await client2.post(
+            "/bookmarks",
+            json={"url": "https://example3.com", "title": "User 2 Bookmark"},
+        )
 
         # User 1 lists bookmarks - should see only 2
         response = await client1.get("/bookmarks")
@@ -156,8 +154,7 @@ class TestMultiTenancy:
         app.dependency_overrides[get_db] = override_get_db
 
         async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://test"
+            transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
             response = await client.get("/bookmarks")
             assert response.status_code == 401
@@ -178,7 +175,7 @@ class TestMultiTenancy:
         async with AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://test",
-            headers={"X-User-ID": ""}
+            headers={"X-User-ID": ""},
         ) as client:
             response = await client.get("/bookmarks")
             assert response.status_code == 401
@@ -199,7 +196,7 @@ class TestMultiTenancy:
         async with AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://test",
-            headers={"X-User-ID": "user@invalid!chars"}
+            headers={"X-User-ID": "user@invalid!chars"},
         ) as client:
             response = await client.get("/bookmarks")
             assert response.status_code == 401
@@ -239,7 +236,7 @@ class TestMultiTenancy:
         async with AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://test",
-            headers={"X-User-ID": long_user_id}
+            headers={"X-User-ID": long_user_id},
         ) as client:
             response = await client.get("/bookmarks")
             assert response.status_code == 401

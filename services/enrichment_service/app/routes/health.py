@@ -19,22 +19,15 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> dict[str, str]:
         # Test database connection
         result = await db.execute(text("SELECT 1"))
         result.scalar()
-        return {
-            "status": "healthy",
-            "database": "connected",
-            "service": "enrichment"
-        }
+        return {"status": "healthy", "database": "connected", "service": "enrichment"}
     except Exception as e:
         logger.error(
             "Health check failed - database connection error",
-            extra={
-                "error": str(e),
-                "error_type": type(e).__name__
-            },
-            exc_info=True
+            extra={"error": str(e), "error_type": type(e).__name__},
+            exc_info=True,
         )
         return {
             "status": "unhealthy",
             "database": "disconnected",
-            "service": "enrichment"
+            "service": "enrichment",
         }

@@ -7,15 +7,18 @@ class TestBookmarkPagination:
     """Tests for pagination and sorting functionality on bookmark list endpoint."""
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("total_items,page_size,expected_pages", [
-        (0, 10, 0),    # No items
-        (1, 10, 1),    # Single item
-        (10, 10, 1),   # Exact multiple
-        (11, 10, 2),   # With remainder
-        (99, 10, 10),  # Multiple pages
-        (100, 10, 10), # Exact multiple, larger dataset
-        (5, 3, 2),     # Small page size
-    ])
+    @pytest.mark.parametrize(
+        "total_items,page_size,expected_pages",
+        [
+            (0, 10, 0),  # No items
+            (1, 10, 1),  # Single item
+            (10, 10, 1),  # Exact multiple
+            (11, 10, 2),  # With remainder
+            (99, 10, 10),  # Multiple pages
+            (100, 10, 10),  # Exact multiple, larger dataset
+            (5, 3, 2),  # Small page size
+        ],
+    )
     async def test_list_bookmarks_pagination_calculates_total_pages_correctly(
         self, client: AsyncClient, total_items: int, page_size: int, expected_pages: int
     ):
@@ -30,7 +33,7 @@ class TestBookmarkPagination:
             bookmark_data = {
                 "url": f"https://example{i}.com",
                 "title": f"Bookmark {i}",
-                "description": f"Description {i}"
+                "description": f"Description {i}",
             }
             create_response = await client.post("/bookmarks", json=bookmark_data)
             assert create_response.status_code == 201
@@ -169,8 +172,7 @@ class TestBookmarkPagination:
         first_bookmark_id = created_bookmarks[0]["id"]
         await asyncio.sleep(0.1)  # Ensure time difference
         update_response = await client.put(
-            f"/bookmarks/{first_bookmark_id}",
-            json={"title": "Charlie Updated"}
+            f"/bookmarks/{first_bookmark_id}", json={"title": "Charlie Updated"}
         )
         assert update_response.status_code == 200
 

@@ -15,7 +15,7 @@ class TestMetadataFetcher:
                 return_value=httpx.Response(
                     200,
                     text=sample_html_with_og_tags,
-                    headers={"content-type": "text/html; charset=utf-8"}
+                    headers={"content-type": "text/html; charset=utf-8"},
                 )
             )
 
@@ -39,7 +39,7 @@ class TestMetadataFetcher:
                 return_value=httpx.Response(
                     200,
                     text=sample_html_without_og_tags,
-                    headers={"content-type": "text/html"}
+                    headers={"content-type": "text/html"},
                 )
             )
 
@@ -61,9 +61,7 @@ class TestMetadataFetcher:
         async with respx.mock:
             respx.get("https://example.com").mock(
                 return_value=httpx.Response(
-                    200,
-                    text=sample_html_minimal,
-                    headers={"content-type": "text/html"}
+                    200, text=sample_html_minimal, headers={"content-type": "text/html"}
                 )
             )
 
@@ -86,7 +84,7 @@ class TestMetadataFetcher:
                 return_value=httpx.Response(
                     200,
                     json={"data": "not html"},
-                    headers={"content-type": "application/json"}
+                    headers={"content-type": "application/json"},
                 )
             )
 
@@ -101,7 +99,7 @@ class TestMetadataFetcher:
                 return_value=httpx.Response(
                     200,
                     content=b"fake image data",
-                    headers={"content-type": "image/png"}
+                    headers={"content-type": "image/png"},
                 )
             )
 
@@ -136,9 +134,7 @@ class TestMetadataFetcher:
         async with respx.mock:
             respx.get("https://example.com/notfound").mock(
                 return_value=httpx.Response(
-                    404,
-                    text="Not Found",
-                    headers={"content-type": "text/html"}
+                    404, text="Not Found", headers={"content-type": "text/html"}
                 )
             )
 
@@ -153,7 +149,7 @@ class TestMetadataFetcher:
                 return_value=httpx.Response(
                     500,
                     text="Internal Server Error",
-                    headers={"content-type": "text/html"}
+                    headers={"content-type": "text/html"},
                 )
             )
 
@@ -173,9 +169,7 @@ class TestMetadataFetcher:
         async with respx.mock:
             respx.get("https://example.com").mock(
                 return_value=httpx.Response(
-                    200,
-                    text=html,
-                    headers={"content-type": "text/html"}
+                    200, text=html, headers={"content-type": "text/html"}
                 )
             )
 
@@ -195,9 +189,7 @@ class TestMetadataFetcher:
         async with respx.mock:
             respx.get("https://example.com").mock(
                 return_value=httpx.Response(
-                    200,
-                    text=html,
-                    headers={"content-type": "text/html"}
+                    200, text=html, headers={"content-type": "text/html"}
                 )
             )
 
@@ -217,9 +209,7 @@ class TestMetadataFetcher:
         async with respx.mock:
             respx.get("https://example.com").mock(
                 return_value=httpx.Response(
-                    200,
-                    text=html,
-                    headers={"content-type": "text/html"}
+                    200, text=html, headers={"content-type": "text/html"}
                 )
             )
 
@@ -236,7 +226,7 @@ class TestMetadataFetcher:
                 return_value=httpx.Response(
                     200,
                     text=sample_html_with_relative_urls,
-                    headers={"content-type": "text/html"}
+                    headers={"content-type": "text/html"},
                 )
             )
 
@@ -253,9 +243,7 @@ class TestMetadataFetcher:
         async with respx.mock:
             respx.get("https://example.com").mock(
                 return_value=httpx.Response(
-                    200,
-                    text="",
-                    headers={"content-type": "text/html"}
+                    200, text="", headers={"content-type": "text/html"}
                 )
             )
 
@@ -269,21 +257,20 @@ class TestMetadataFetcher:
 
     async def test_fetch_metadata_follows_redirects(self):
         """Test that fetcher follows HTTP redirects."""
-        html = "<html><head><meta property='og:title' content='Redirected'/></head></html>"
+        html = (
+            "<html><head><meta property='og:title' content='Redirected'/></head></html>"
+        )
 
         async with respx.mock:
             # Setup redirect chain
             respx.get("https://example.com/old").mock(
                 return_value=httpx.Response(
-                    301,
-                    headers={"location": "https://example.com/new"}
+                    301, headers={"location": "https://example.com/new"}
                 )
             )
             respx.get("https://example.com/new").mock(
                 return_value=httpx.Response(
-                    200,
-                    text=html,
-                    headers={"content-type": "text/html"}
+                    200, text=html, headers={"content-type": "text/html"}
                 )
             )
 

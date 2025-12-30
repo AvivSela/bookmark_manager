@@ -10,6 +10,7 @@ class BookmarkEvent(BaseModel):
 
     Topic: bookmarks.bookmark.created
     """
+
     event_id: UUID
     event_type: str  # "created", "updated", "deleted"
     timestamp: datetime

@@ -6,13 +6,16 @@ class TestBookmarkValidation:
     """Tests for Pydantic schema validation on bookmark fields."""
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("invalid_url", [
-        "not-a-url",
-        "ftp://example.com",  # Only HTTP/HTTPS allowed
-        "example.com",  # Missing protocol
-        "",  # Empty string
-        "htp://typo.com",  # Typo in protocol
-    ])
+    @pytest.mark.parametrize(
+        "invalid_url",
+        [
+            "not-a-url",
+            "ftp://example.com",  # Only HTTP/HTTPS allowed
+            "example.com",  # Missing protocol
+            "",  # Empty string
+            "htp://typo.com",  # Typo in protocol
+        ],
+    )
     async def test_create_bookmark_invalid_url_format_returns_400(
         self, client: AsyncClient, invalid_url: str
     ):
@@ -24,7 +27,7 @@ class TestBookmarkValidation:
         bookmark_data = {
             "url": invalid_url,
             "title": "Test Bookmark",
-            "description": "Test description"
+            "description": "Test description",
         }
 
         response = await client.post("/bookmarks", json=bookmark_data)
@@ -46,7 +49,7 @@ class TestBookmarkValidation:
         bookmark_data = {
             "url": "https://example.com",
             "title": "a" * 501,  # 501 characters, exceeds max of 500
-            "description": "Test description"
+            "description": "Test description",
         }
 
         response = await client.post("/bookmarks", json=bookmark_data)
@@ -61,10 +64,13 @@ class TestBookmarkValidation:
         assert "title" in error_message.lower()
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("empty_title", [
-        "",  # Empty string
-        "   ",  # Whitespace only
-    ])
+    @pytest.mark.parametrize(
+        "empty_title",
+        [
+            "",  # Empty string
+            "   ",  # Whitespace only
+        ],
+    )
     async def test_create_bookmark_empty_title_returns_400(
         self, client: AsyncClient, empty_title: str
     ):
@@ -76,7 +82,7 @@ class TestBookmarkValidation:
         bookmark_data = {
             "url": "https://example.com",
             "title": empty_title,
-            "description": "Test description"
+            "description": "Test description",
         }
 
         response = await client.post("/bookmarks", json=bookmark_data)
@@ -102,7 +108,7 @@ class TestBookmarkValidation:
         bookmark_data = {
             "url": "https://example.com",
             "title": "Test Bookmark",
-            "description": "a" * 5001  # 5001 characters, exceeds max of 5000
+            "description": "a" * 5001,  # 5001 characters, exceeds max of 5000
         }
 
         response = await client.post("/bookmarks", json=bookmark_data)
@@ -126,7 +132,7 @@ class TestBookmarkValidation:
         bookmark_data = {
             "url": "https://example.com",
             "title": "Valid Bookmark",
-            "description": "This is a valid description"
+            "description": "This is a valid description",
         }
 
         response = await client.post("/bookmarks", json=bookmark_data)
@@ -140,13 +146,15 @@ class TestBookmarkValidation:
         assert bookmark["description"] == bookmark_data["description"]
 
     @pytest.mark.asyncio
-    async def test_create_bookmark_without_description_succeeds(self, client: AsyncClient):
+    async def test_create_bookmark_without_description_succeeds(
+        self, client: AsyncClient
+    ):
         """
         Additional test: Description is optional - bookmark can be created without it.
         """
         bookmark_data = {
             "url": "https://example.com",
-            "title": "Bookmark Without Description"
+            "title": "Bookmark Without Description",
         }
 
         response = await client.post("/bookmarks", json=bookmark_data)
@@ -157,28 +165,32 @@ class TestBookmarkValidation:
         assert bookmark["description"] is None
 
     @pytest.mark.asyncio
-    async def test_create_bookmark_with_max_valid_title_length(self, client: AsyncClient):
+    async def test_create_bookmark_with_max_valid_title_length(
+        self, client: AsyncClient
+    ):
         """
         Additional test: Verify that max valid title length (500 chars) is accepted.
         """
         bookmark_data = {
             "url": "https://example.com",
             "title": "a" * 500,  # Exactly 500 characters
-            "description": "Test"
+            "description": "Test",
         }
 
         response = await client.post("/bookmarks", json=bookmark_data)
         assert response.status_code == 201
 
     @pytest.mark.asyncio
-    async def test_create_bookmark_with_max_valid_description_length(self, client: AsyncClient):
+    async def test_create_bookmark_with_max_valid_description_length(
+        self, client: AsyncClient
+    ):
         """
         Additional test: Verify that max valid description length (5000 chars) is accepted.
         """
         bookmark_data = {
             "url": "https://example.com",
             "title": "Test Bookmark",
-            "description": "a" * 5000  # Exactly 5000 characters
+            "description": "a" * 5000,  # Exactly 5000 characters
         }
 
         response = await client.post("/bookmarks", json=bookmark_data)

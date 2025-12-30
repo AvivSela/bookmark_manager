@@ -88,7 +88,7 @@ def sample_enrichment_result():
         og_type="article",
         og_site_name="Test Site",
         meta_description="Meta description",
-        favicon_url="https://example.com/favicon.ico"
+        favicon_url="https://example.com/favicon.ico",
     )
 
 
@@ -104,12 +104,9 @@ def sample_bookmark_event():
             "url": "https://example.com",
             "user_id": "test-user-123",
             "title": "Example Bookmark",
-            "created_at": datetime.now(timezone.utc).isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat(),
         },
-        metadata={
-            "service": "bookmark-service",
-            "version": "1.0.0"
-        }
+        metadata={"service": "bookmark-service", "version": "1.0.0"},
     )
 
 
@@ -125,8 +122,5 @@ def sample_bookmark_event_missing_url():
             "user_id": "test-user-123",
             # Missing 'url' field
         },
-        metadata={
-            "service": "bookmark-service",
-            "version": "1.0.0"
-        }
+        metadata={"service": "bookmark-service", "version": "1.0.0"},
     )

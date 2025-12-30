@@ -12,4 +12,5 @@ def validator():
 def mock_bookmark_id():
     """Generate a test bookmark UUID."""
     from uuid import uuid4
+
     return uuid4()

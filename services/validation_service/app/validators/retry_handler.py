@@ -5,7 +5,7 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
     retry_if_exception_type,
-    before_sleep_log
+    before_sleep_log,
 )
 from app.config import get_settings
 
@@ -23,9 +23,9 @@ class ValidationRetryHandler:
         wait=wait_exponential(
             multiplier=settings.validation_backoff_multiplier,
             min=settings.validation_initial_retry_delay,
-            max=settings.validation_max_retry_delay
+            max=settings.validation_max_retry_delay,
         ),
-        before_sleep=before_sleep_log(logger, logging.WARNING)
+        before_sleep=before_sleep_log(logger, logging.WARNING),
     )
     async def validate_with_retry(validator, bookmark_id, url):
         """
@@ -55,17 +55,15 @@ class BookmarkUpdateRetryHandler:
 
     @staticmethod
     @retry(
-        retry=retry_if_exception_type((httpx.TimeoutException, httpx.NetworkError, httpx.HTTPStatusError)),
-        stop=stop_after_attempt(5),  # More retries for API updates
-        wait=wait_exponential(
-            multiplier=2.0,
-            min=1.0,
-            max=60.0
+        retry=retry_if_exception_type(
+            (httpx.TimeoutException, httpx.NetworkError, httpx.HTTPStatusError)
         ),
+        stop=stop_after_attempt(5),  # More retries for API updates
+        wait=wait_exponential(multiplier=2.0, min=1.0, max=60.0),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         retry_error_callback=lambda retry_state: logger.error(
             f"Failed to update bookmark after {retry_state.attempt_number} attempts"
-        )
+        ),
     )
     async def update_with_retry(client, bookmark_id, user_id, validation_result):
         """

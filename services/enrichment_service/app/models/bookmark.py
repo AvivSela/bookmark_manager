@@ -1,4 +1,13 @@
-from sqlalchemy import Column, String, Text, DateTime, Index, TypeDecorator, CHAR, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    String,
+    Text,
+    DateTime,
+    Index,
+    TypeDecorator,
+    CHAR,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.sql import func
 import uuid
@@ -11,11 +20,12 @@ class GUID(TypeDecorator):
     Uses PostgreSQL's UUID type when available, otherwise uses
     CHAR(36), storing as stringified hex values.
     """
+
     impl = CHAR
     cache_ok = True
 
     def load_dialect_impl(self, dialect):
-        if dialect.name == 'postgresql':
+        if dialect.name == "postgresql":
             return dialect.type_descriptor(PG_UUID(as_uuid=True))
         else:
             return dialect.type_descriptor(CHAR(36))
@@ -23,7 +33,7 @@ class GUID(TypeDecorator):
     def process_bind_param(self, value, dialect):
         if value is None:
             return value
-        elif dialect.name == 'postgresql':
+        elif dialect.name == "postgresql":
             return value
         else:
             if not isinstance(value, uuid.UUID):
@@ -61,15 +71,13 @@ class Bookmark(Base):
 
     # Timestamps with automatic updates
     created_time = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=False
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     changed_time = Column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
-        nullable=False
+        nullable=False,
     )
 
     # Enrichment fields - Open Graph metadata
@@ -87,9 +95,9 @@ class Bookmark(Base):
 
     # Indexes and constraints for multi-tenancy
     __table_args__ = (
-        Index('idx_bookmark_created_time', 'created_time'),
-        Index('idx_user_bookmarks', 'user_id', 'created_time'),
-        UniqueConstraint('user_id', 'url', name='uq_user_url'),
+        Index("idx_bookmark_created_time", "created_time"),
+        Index("idx_user_bookmarks", "user_id", "created_time"),
+        UniqueConstraint("user_id", "url", name="uq_user_url"),
     )
 
     def __repr__(self):

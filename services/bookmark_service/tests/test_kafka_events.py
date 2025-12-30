@@ -1,4 +1,5 @@
 """Tests for Kafka event publishing."""
+
 import pytest
 from httpx import AsyncClient
 
@@ -21,7 +22,9 @@ class TestKafkaEventPublishing:
         event = mock_kafka_producer[0]
         assert event["event_type"] == "created"
         # URL may be normalized with trailing slash by Pydantic
-        assert event["data"]["url"].rstrip("/") == sample_bookmark_data["url"].rstrip("/")
+        assert event["data"]["url"].rstrip("/") == sample_bookmark_data["url"].rstrip(
+            "/"
+        )
         assert event["data"]["title"] == sample_bookmark_data["title"]
         assert event["data"]["user_id"] == "test-user-123"
         assert "id" in event["data"]
@@ -114,7 +117,7 @@ class TestKafkaEventPublishing:
         # Attempt to update non-existent bookmark
         response = await client.put(
             "/bookmarks/00000000-0000-0000-0000-000000000000",
-            json={"title": "New Title"}
+            json={"title": "New Title"},
         )
         assert response.status_code == 404
 
@@ -128,7 +131,9 @@ class TestKafkaEventPublishing:
         client = await authenticated_client("test-user-404-delete")
 
         # Attempt to delete non-existent bookmark
-        response = await client.delete("/bookmarks/00000000-0000-0000-0000-000000000000")
+        response = await client.delete(
+            "/bookmarks/00000000-0000-0000-0000-000000000000"
+        )
         assert response.status_code == 404
 
         # Verify no event was published

@@ -15,8 +15,7 @@ class TestBookmarkEnrichmentConsumer:
 
         # Mock the dependencies
         mock_enrichment_result = EnrichmentResult(
-            og_title="Test Title",
-            og_description="Test Description"
+            og_title="Test Title", og_description="Test Description"
         )
 
         consumer.retry_handler.fetch_with_retry = AsyncMock(
@@ -70,7 +69,7 @@ class TestBookmarkEnrichmentConsumer:
                 "user_id": "test-user-123",
                 # Missing 'id' field
             },
-            metadata={"service": "bookmark-service", "version": "1.0.0"}
+            metadata={"service": "bookmark-service", "version": "1.0.0"},
         )
 
         consumer = BookmarkEnrichmentConsumer()
@@ -99,7 +98,7 @@ class TestBookmarkEnrichmentConsumer:
                 "url": "https://example.com",
                 # Missing 'user_id' field
             },
-            metadata={"service": "bookmark-service", "version": "1.0.0"}
+            metadata={"service": "bookmark-service", "version": "1.0.0"},
         )
 
         consumer = BookmarkEnrichmentConsumer()
@@ -199,9 +198,7 @@ class TestBookmarkEnrichmentConsumer:
         assert args[2] == sample_bookmark_event.data["user_id"]
         assert args[3] == mock_enrichment_result
 
-    async def test_enrich_bookmark_converts_string_to_uuid(
-        self, sample_bookmark_event
-    ):
+    async def test_enrich_bookmark_converts_string_to_uuid(self, sample_bookmark_event):
         """Test that bookmark ID string is converted to UUID."""
         consumer = BookmarkEnrichmentConsumer()
 
@@ -231,7 +228,7 @@ class TestBookmarkEnrichmentConsumer:
         consumer.retry_handler.update_with_retry = AsyncMock(return_value=True)
 
         # Capture log output
-        with patch('app.consumers.bookmark_consumer.logger') as mock_logger:
+        with patch("app.consumers.bookmark_consumer.logger") as mock_logger:
             await consumer._enrich_bookmark(sample_bookmark_event)
 
             # Verify success logging

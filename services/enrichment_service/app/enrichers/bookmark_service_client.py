@@ -16,10 +16,7 @@ class BookmarkServiceClient:
         self.timeout = httpx.Timeout(settings.bookmark_service_timeout_seconds)
 
     async def update_bookmark_enrichment(
-        self,
-        bookmark_id: UUID,
-        user_id: str,
-        enrichment_result: EnrichmentResult
+        self, bookmark_id: UUID, user_id: str, enrichment_result: EnrichmentResult
     ) -> bool:
         """
         Update bookmark with enrichment data via API.

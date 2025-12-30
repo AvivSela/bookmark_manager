@@ -70,9 +70,7 @@ async def test_db() -> AsyncGenerator[AsyncSession, None]:
 
     # Create session factory
     async_session_maker = async_sessionmaker(
-        engine,
-        class_=AsyncSession,
-        expire_on_commit=False
+        engine, class_=AsyncSession, expire_on_commit=False
     )
 
     # Provide session for test
@@ -87,12 +85,15 @@ async def test_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest.fixture(scope="function")
-async def client(test_db: AsyncSession, test_user_id: str) -> AsyncGenerator[AsyncClient, None]:
+async def client(
+    test_db: AsyncSession, test_user_id: str
+) -> AsyncGenerator[AsyncClient, None]:
     """
     Create a test client with overridden database dependency and user authentication.
 
     This ensures all API requests use the test database and default test user.
     """
+
     async def override_get_db():
         yield test_db
 
@@ -103,7 +104,7 @@ async def client(test_db: AsyncSession, test_user_id: str) -> AsyncGenerator[Asy
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",
-        headers={"X-User-ID": test_user_id}
+        headers={"X-User-ID": test_user_id},
     ) as ac:
         yield ac
 
@@ -125,6 +126,7 @@ def authenticated_client(test_db: AsyncSession):
     Returns:
         Callable that creates AsyncClient instances with custom user IDs.
     """
+
     async def _create_client(user_id: str) -> AsyncClient:
         async def override_get_db():
             yield test_db
@@ -134,7 +136,7 @@ def authenticated_client(test_db: AsyncSession):
         return AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://test",
-            headers={"X-User-ID": user_id}
+            headers={"X-User-ID": user_id},
         )
 
     return _create_client
@@ -150,7 +152,7 @@ def sample_bookmark_data() -> dict:
     return {
         "url": "https://example.com",
         "title": "Example Bookmark",
-        "description": "This is a test bookmark"
+        "description": "This is a test bookmark",
     }
 
 
@@ -172,17 +174,15 @@ async def create_bookmark(test_db: AsyncSession):
     Returns:
         Callable that creates Bookmark instances in the database.
     """
+
     async def _create_bookmark(
         url: str = "https://example.com",
         title: str = "Test Bookmark",
         description: Optional[str] = None,
-        user_id: str = "test-user-123"
+        user_id: str = "test-user-123",
     ) -> Bookmark:
         bookmark = Bookmark(
-            url=url,
-            title=title,
-            description=description,
-            user_id=user_id
+            url=url, title=title, description=description, user_id=user_id
         )
         test_db.add(bookmark)
         await test_db.commit()
@@ -206,14 +206,12 @@ def mock_kafka_producer():
 
     class MockKafkaProducer:
         async def publish_event(self, event_type: str, bookmark_data: dict):
-            published_events.append({
-                "event_type": event_type,
-                "data": bookmark_data
-            })
+            published_events.append({"event_type": event_type, "data": bookmark_data})
             return True
 
     # Override the global Kafka producer
     import app.kafka
+
     original_producer = app.kafka._kafka_producer
     app.kafka._kafka_producer = MockKafkaProducer()
 

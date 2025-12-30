@@ -25,7 +25,7 @@ class KafkaEventProducer:
         topic_prefix: str,
         compression_type: str = "gzip",
         max_retries: int = 3,
-        request_timeout_ms: int = 30000
+        request_timeout_ms: int = 30000,
     ):
         """
         Initialize Kafka producer configuration.
@@ -59,7 +59,7 @@ class KafkaEventProducer:
                 linger_ms=10,  # Wait up to 10ms to batch messages
                 request_timeout_ms=self._request_timeout_ms,
                 retry_backoff_ms=100,
-                value_serializer=lambda v: json.dumps(v).encode('utf-8')
+                value_serializer=lambda v: json.dumps(v).encode("utf-8"),
             )
             await self._producer.start()
             logger.info(
@@ -67,8 +67,8 @@ class KafkaEventProducer:
                 extra={
                     "bootstrap_servers": self._bootstrap_servers,
                     "topic_prefix": self._topic_prefix,
-                    "compression": self._compression_type
-                }
+                    "compression": self._compression_type,
+                },
             )
         except Exception as e:
             logger.error(
@@ -76,9 +76,9 @@ class KafkaEventProducer:
                 extra={
                     "error": str(e),
                     "error_type": type(e).__name__,
-                    "bootstrap_servers": self._bootstrap_servers
+                    "bootstrap_servers": self._bootstrap_servers,
                 },
-                exc_info=True
+                exc_info=True,
             )
             # Don't raise - allow application to start without Kafka
             self._producer = None
@@ -98,14 +98,14 @@ class KafkaEventProducer:
                 logger.error(
                     "Error stopping Kafka producer",
                     extra={"error": str(e), "error_type": type(e).__name__},
-                    exc_info=True
+                    exc_info=True,
                 )
 
     async def publish_event(
         self,
         event_type: str,
         bookmark_data: Dict[str, Any],
-        additional_metadata: Optional[Dict[str, str]] = None
+        additional_metadata: Optional[Dict[str, str]] = None,
     ) -> bool:
         """
         Publish a bookmark event to Kafka.
@@ -127,25 +127,20 @@ class KafkaEventProducer:
                 "Kafka producer not initialized - skipping event publish",
                 extra={
                     "event_type": event_type,
-                    "bookmark_id": bookmark_data.get("id")
-                }
+                    "bookmark_id": bookmark_data.get("id"),
+                },
             )
             return False
 
         try:
             # Create event with metadata
-            event_metadata = {
-                "service": "bookmark-service",
-                "version": "1.0.0"
-            }
+            event_metadata = {"service": "bookmark-service", "version": "1.0.0"}
             if additional_metadata:
                 event_metadata.update(additional_metadata)
 
             # Create BookmarkEvent
             event = BookmarkEvent(
-                event_type=event_type,
-                data=bookmark_data,
-                metadata=event_metadata
+                event_type=event_type, data=bookmark_data, metadata=event_metadata
             )
 
             # Determine topic name
@@ -154,15 +149,13 @@ class KafkaEventProducer:
             # Use bookmark ID as partition key for ordering
             partition_key = bookmark_data.get("id", "")
             if isinstance(partition_key, str):
-                partition_key_bytes = partition_key.encode('utf-8')
+                partition_key_bytes = partition_key.encode("utf-8")
             else:
-                partition_key_bytes = str(partition_key).encode('utf-8')
+                partition_key_bytes = str(partition_key).encode("utf-8")
 
             # Publish to Kafka
             await self._producer.send_and_wait(
-                topic=topic,
-                value=event.to_json_dict(),
-                key=partition_key_bytes
+                topic=topic, value=event.to_json_dict(), key=partition_key_bytes
             )
 
             logger.info(
@@ -172,8 +165,8 @@ class KafkaEventProducer:
                     "event_type": event_type,
                     "bookmark_id": bookmark_data.get("id"),
                     "user_id": bookmark_data.get("user_id"),
-                    "topic": topic
-                }
+                    "topic": topic,
+                },
             )
             return True
 
@@ -185,9 +178,9 @@ class KafkaEventProducer:
                     "bookmark_id": bookmark_data.get("id"),
                     "user_id": bookmark_data.get("user_id"),
                     "error": str(e),
-                    "bootstrap_servers": self._bootstrap_servers
+                    "bootstrap_servers": self._bootstrap_servers,
                 },
-                exc_info=True
+                exc_info=True,
             )
             return False
 
@@ -199,9 +192,9 @@ class KafkaEventProducer:
                     "bookmark_id": bookmark_data.get("id"),
                     "user_id": bookmark_data.get("user_id"),
                     "error": str(e),
-                    "error_type": type(e).__name__
+                    "error_type": type(e).__name__,
                 },
-                exc_info=True
+                exc_info=True,
             )
             return False
 
@@ -213,7 +206,7 @@ class KafkaEventProducer:
                     "bookmark_id": bookmark_data.get("id"),
                     "user_id": bookmark_data.get("user_id"),
                     "error": str(e),
-                    "error_type": type(e).__name__
-                }
+                    "error_type": type(e).__name__,
+                },
             )
             return False

@@ -20,7 +20,7 @@ class BookmarkServiceClient:
         self,
         needs_validation: bool = True,
         limit: int = 100,
-        user_id: Optional[str] = None
+        user_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Query bookmarks from bookmark service.
@@ -61,9 +61,7 @@ class BookmarkServiceClient:
             return bookmarks
 
     async def get_bookmark(
-        self,
-        bookmark_id: UUID,
-        user_id: str
+        self, bookmark_id: UUID, user_id: str
     ) -> Optional[Dict[str, Any]]:
         """
         Fetch a single bookmark by ID.
@@ -100,10 +98,7 @@ class BookmarkServiceClient:
             return bookmark
 
     async def update_bookmark_validation(
-        self,
-        bookmark_id: UUID,
-        user_id: str,
-        validation_result: ValidationResult
+        self, bookmark_id: UUID, user_id: str, validation_result: ValidationResult
     ) -> Dict[str, Any]:
         """
         Update bookmark validation fields via PATCH request.
@@ -130,7 +125,7 @@ class BookmarkServiceClient:
             "validation_last_checked": validation_result.checked_at.isoformat(),
             "validation_http_status": validation_result.http_status,
             "validation_final_url": validation_result.final_url,
-            "validation_error_message": validation_result.error_message
+            "validation_error_message": validation_result.error_message,
         }
 
         logger.info(

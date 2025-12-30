@@ -22,9 +22,7 @@ class TestBookmarkServiceClient:
 
             client = BookmarkServiceClient()
             result = await client.update_bookmark_enrichment(
-                bookmark_id,
-                user_id,
-                sample_enrichment_result
+                bookmark_id, user_id, sample_enrichment_result
             )
 
             assert result is True
@@ -44,14 +42,12 @@ class TestBookmarkServiceClient:
 
             client = BookmarkServiceClient()
             await client.update_bookmark_enrichment(
-                bookmark_id,
-                user_id,
-                sample_enrichment_result
+                bookmark_id, user_id, sample_enrichment_result
             )
 
             # Verify payload structure
             request = route.calls.last.request
-            payload = request.content.decode('utf-8')
+            payload = request.content.decode("utf-8")
 
             assert '"og_title": "Test Title"' in payload
             assert '"og_description": "Test Description"' in payload
@@ -75,9 +71,7 @@ class TestBookmarkServiceClient:
 
             client = BookmarkServiceClient()
             await client.update_bookmark_enrichment(
-                bookmark_id,
-                user_id,
-                sample_enrichment_result
+                bookmark_id, user_id, sample_enrichment_result
             )
 
             # Verify X-User-ID header
@@ -92,18 +86,14 @@ class TestBookmarkServiceClient:
         user_id = "test-user-123"
 
         async with respx.mock:
-            respx.put(
-                f"http://bookmark-service:8000/bookmarks/{bookmark_id}"
-            ).mock(
+            respx.put(f"http://bookmark-service:8000/bookmarks/{bookmark_id}").mock(
                 return_value=httpx.Response(404, json={"error": "Not found"})
             )
 
             client = BookmarkServiceClient()
             with pytest.raises(httpx.HTTPStatusError) as exc_info:
                 await client.update_bookmark_enrichment(
-                    bookmark_id,
-                    user_id,
-                    sample_enrichment_result
+                    bookmark_id, user_id, sample_enrichment_result
                 )
 
             assert exc_info.value.response.status_code == 404
@@ -116,9 +106,7 @@ class TestBookmarkServiceClient:
         user_id = "test-user-123"
 
         async with respx.mock:
-            respx.put(
-                f"http://bookmark-service:8000/bookmarks/{bookmark_id}"
-            ).mock(
+            respx.put(f"http://bookmark-service:8000/bookmarks/{bookmark_id}").mock(
                 return_value=httpx.Response(
                     500, json={"error": "Internal server error"}
                 )
@@ -127,9 +115,7 @@ class TestBookmarkServiceClient:
             client = BookmarkServiceClient()
             with pytest.raises(httpx.HTTPStatusError) as exc_info:
                 await client.update_bookmark_enrichment(
-                    bookmark_id,
-                    user_id,
-                    sample_enrichment_result
+                    bookmark_id, user_id, sample_enrichment_result
                 )
 
             assert exc_info.value.response.status_code == 500
@@ -142,16 +128,14 @@ class TestBookmarkServiceClient:
         user_id = "test-user-123"
 
         async with respx.mock:
-            respx.put(
-                f"http://bookmark-service:8000/bookmarks/{bookmark_id}"
-            ).mock(side_effect=httpx.TimeoutException("Request timeout"))
+            respx.put(f"http://bookmark-service:8000/bookmarks/{bookmark_id}").mock(
+                side_effect=httpx.TimeoutException("Request timeout")
+            )
 
             client = BookmarkServiceClient()
             with pytest.raises(httpx.TimeoutException):
                 await client.update_bookmark_enrichment(
-                    bookmark_id,
-                    user_id,
-                    sample_enrichment_result
+                    bookmark_id, user_id, sample_enrichment_result
                 )
 
     async def test_update_bookmark_enrichment_correct_url_construction(
@@ -168,9 +152,7 @@ class TestBookmarkServiceClient:
 
             client = BookmarkServiceClient()
             await client.update_bookmark_enrichment(
-                bookmark_id,
-                user_id,
-                sample_enrichment_result
+                bookmark_id, user_id, sample_enrichment_result
             )
 
             # Verify URL construction
@@ -186,14 +168,12 @@ class TestBookmarkServiceClient:
         user_id = "test-user-123"
 
         async with respx.mock:
-            respx.put(
-                f"http://bookmark-service:8000/bookmarks/{bookmark_id}"
-            ).mock(side_effect=httpx.ConnectError("Connection failed"))
+            respx.put(f"http://bookmark-service:8000/bookmarks/{bookmark_id}").mock(
+                side_effect=httpx.ConnectError("Connection failed")
+            )
 
             client = BookmarkServiceClient()
             with pytest.raises(httpx.ConnectError):
                 await client.update_bookmark_enrichment(
-                    bookmark_id,
-                    user_id,
-                    sample_enrichment_result
+                    bookmark_id, user_id, sample_enrichment_result
                 )
