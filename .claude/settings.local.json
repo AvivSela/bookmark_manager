@@ -2,7 +2,19 @@
   "permissions": {
     "allow": [
       "Bash(tree:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(sudo docker compose:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker inspect:*)",
+      "Bash(python3:*)",
+      "Bash(docker exec:*)",
+      "Bash(sudo docker exec:*)",
+      "Bash(test:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker logs:*)",
+      "Bash(sudo docker ps:*)",
+      "Bash(sudo docker logs:*)",
+      "Bash(sudo docker volume:*)"
     ]
   }
 }

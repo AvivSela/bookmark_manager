@@ -24,13 +24,13 @@ Edit [.env](.env) to change default passwords and ports.
 Start all services in detached mode:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Wait for services to be healthy (30-60 seconds):
 
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 ### 3. Access Services
@@ -43,7 +43,7 @@ Once running, you can access:
   - Database: `bookmark_db`
 
 - **pgAdmin (PostgreSQL UI)**: http://localhost:5050
-  - Email: `admin@bookmark.local` (configurable in [.env](.env))
+  - Email: `admin@example.com` (configurable in [.env](.env))
   - Password: `admin` (configurable in [.env](.env))
 
 - **Kafka Broker**: `localhost:9092`
@@ -58,37 +58,37 @@ Once running, you can access:
 
 ```bash
 # All services
-docker-compose logs -f
+docker compose logs -f
 
 # Specific service
-docker-compose logs -f kafka
-docker-compose logs -f postgres
+docker compose logs -f kafka
+docker compose logs -f postgres
 ```
 
 ### Stop Services
 
 ```bash
 # Stop but keep data
-docker-compose down
+docker compose down
 
 # Stop and remove all data (clean slate)
-docker-compose down -v
+docker compose down -v
 ```
 
 ### Restart Services
 
 ```bash
 # Restart all
-docker-compose restart
+docker compose restart
 
 # Restart specific service
-docker-compose restart kafka
+docker compose restart kafka
 ```
 
 ### Check Service Status
 
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 ## Connecting to PostgreSQL
@@ -103,13 +103,19 @@ docker exec -it bookmark-postgres psql -U bookmark_user -d bookmark_db
 
 1. Open http://localhost:5050
 2. Login with credentials from [.env](.env)
-3. Right-click "Servers" → "Register" → "Server"
-4. General tab: Name = "Bookmark DB"
-5. Connection tab:
-   - Host: `postgres` (service name)
-   - Port: `5432`
-   - Username: `bookmark_user`
-   - Password: `bookmark_pass`
+3. The PostgreSQL server is **automatically configured** and appears as "Bookmark PostgreSQL" in the sidebar
+   - Credentials are pre-configured (no manual setup needed)
+   - Configuration is persisted in the `pgadmin_data` volume
+
+**Manual server registration** (if needed):
+- Right-click "Servers" → "Register" → "Server"
+- General tab: Name = "Bookmark DB"
+- Connection tab:
+  - Host: `postgres` (service name)
+  - Port: `5432`
+  - Username: `bookmark_user`
+  - Password: `bookmark_pass`
+  - Save password: Yes
 
 ## Working with Kafka
 
@@ -153,13 +159,27 @@ All data is stored in Docker named volumes:
 
 - `postgres_data`: Database files
 - `kafka_data`: Kafka logs and topics
-- `pgadmin_data`: pgAdmin configuration
+- `pgadmin_data`: pgAdmin configuration and user preferences
 
-Data persists across `docker-compose down` but is removed with `docker-compose down -v`.
+Data persists across `docker compose down` but is removed with `docker compose down -v`.
+
+### pgAdmin Server Configuration
+
+The PostgreSQL server is automatically registered in pgAdmin using:
+- [pgadmin/servers.json](pgadmin/servers.json): Server connection details
+- [pgadmin/pgpass](pgadmin/pgpass): Stored password file (PostgreSQL password format)
+
+These files are mounted into the pgAdmin container, so the server configuration persists and requires no manual setup.
 
 ### Networking
 
-All services communicate via the `bookmark-network` bridge network. Services can reach each other using their service names (e.g., `kafka`, `postgres`).
+All services communicate via the `bookmark-network` bridge network. Services can reach each other using their container names:
+- PostgreSQL: `bookmark-postgres:5432`
+- Kafka: `bookmark-kafka:9092`
+- pgAdmin: `bookmark-pgadmin:80`
+- Kafdrop: `bookmark-kafdrop:9000`
+
+**Note**: Applications running inside the Docker network should use `bookmark-kafka:9092` to connect to Kafka, not `localhost:9092`.
 
 ## Configuration
 
@@ -204,27 +224,28 @@ services:
 
 2. Check service logs:
    ```bash
-   docker-compose logs kafka
+   docker compose logs kafka
    ```
 
 ### Kafka Connection Issues
 
-- Ensure Kafka is healthy: `docker-compose ps kafka`
+- Ensure Kafka is healthy: `docker compose ps kafka`
 - Wait 30-60 seconds after startup for Kafka to be ready
-- Check Kafka logs: `docker-compose logs kafka`
+- Check Kafka logs: `docker compose logs kafka`
+- If Kafdrop can't connect: Ensure `KAFKA_ADVERTISED_LISTENERS` in [docker-compose.yml](docker-compose.yml) is set to `PLAINTEXT://bookmark-kafka:9092` (not `localhost`)
 
 ### PostgreSQL Connection Issues
 
 - Verify credentials in [.env](.env) match your connection string
-- Check PostgreSQL logs: `docker-compose logs postgres`
+- Check PostgreSQL logs: `docker compose logs postgres`
 
 ### Reset Everything
 
 To start fresh:
 
 ```bash
-docker-compose down -v
-docker-compose up -d
+docker compose down -v
+docker compose up -d
 ```
 
 ## Security Notes

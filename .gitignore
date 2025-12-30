@@ -1,5 +1,6 @@
-# Environment variables
+# Environment variables and secrets
 .env
+pgadmin/pgpass
 
 # Docker volumes and data
 postgres_data/
