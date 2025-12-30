@@ -18,6 +18,14 @@ class BookmarkBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=500)
     description: Optional[str] = Field(None, max_length=5000)
 
+    @field_validator("url", mode="after")
+    @classmethod
+    def validate_url_scheme(cls, v: HttpUrl) -> HttpUrl:
+        """Validate that URL uses only http or https schemes."""
+        if v.scheme not in ("http", "https"):
+            raise ValueError("URL must use http or https scheme")
+        return v
+
     @field_validator("title", mode="after")
     @classmethod
     def title_must_not_be_empty(cls, v: str) -> str:
@@ -58,6 +66,14 @@ class BookmarkUpdate(BaseModel):
     validation_http_status: Optional[int] = None
     validation_final_url: Optional[str] = Field(None, max_length=2048)
     validation_error_message: Optional[str] = None
+
+    @field_validator("url", mode="after")
+    @classmethod
+    def validate_url_scheme(cls, v: Optional[HttpUrl]) -> Optional[HttpUrl]:
+        """Validate that URL uses only http or https schemes when provided."""
+        if v is not None and v.scheme not in ("http", "https"):
+            raise ValueError("URL must use http or https scheme")
+        return v
 
     @field_validator("title", mode="after")
     @classmethod

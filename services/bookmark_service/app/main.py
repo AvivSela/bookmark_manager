@@ -2,18 +2,23 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
+import logging
 from app.config import get_settings
 from app.database import init_db
 from app.routes import bookmarks, health
 from app.kafka import init_kafka, shutdown_kafka
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager - runs on startup and shutdown."""
-    # Startup: Initialize database and Kafka
+    # Startup: Validate configuration
+    settings = get_settings()  # This will fail early if required configs are missing
+
+    # Initialize database and Kafka
     await init_db()
     await init_kafka()
     yield
@@ -59,6 +64,30 @@ async def validation_exception_handler(
 
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST, content={"detail": errors}
+    )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(
+    request: Request, exc: Exception
+) -> JSONResponse:
+    """Handle all unexpected exceptions with generic error message."""
+    # Log detailed error server-side with structured logging
+    logger.error(
+        "Unexpected error occurred",
+        extra={
+            "error": str(exc),
+            "error_type": type(exc).__name__,
+            "path": request.url.path,
+            "method": request.method,
+        },
+        exc_info=True,
+    )
+
+    # Return generic error to client (no sensitive information)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": "An unexpected error occurred. Please try again later."}
     )
 
 

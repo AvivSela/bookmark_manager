@@ -46,8 +46,16 @@ class BookmarkServiceClient:
             "favicon_url": enrichment_result.favicon_url,
         }
 
+        logger.debug(f"Sending PUT request to {url} for bookmark {bookmark_id}")
+
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             response = await client.put(url, json=payload, headers=headers)
+
+            logger.debug(
+                f"Received response: status={response.status_code} "
+                f"for bookmark {bookmark_id}"
+            )
+
             response.raise_for_status()
 
             logger.info(f"Successfully updated bookmark {bookmark_id} via API")

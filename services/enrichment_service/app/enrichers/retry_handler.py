@@ -1,7 +1,7 @@
 from tenacity import (
     retry,
     stop_after_attempt,
-    wait_exponential,
+    wait_random_exponential,
     retry_if_exception_type,
 )
 import httpx
@@ -35,7 +35,7 @@ class EnrichmentRetryHandler:
     @retry(
         retry=retry_if_exception_type(RETRYABLE_EXCEPTIONS),
         stop=stop_after_attempt(settings.enrichment_max_attempts),
-        wait=wait_exponential(
+        wait=wait_random_exponential(
             multiplier=settings.enrichment_backoff_multiplier,
             min=settings.enrichment_initial_retry_delay,
             max=settings.enrichment_max_retry_delay,
@@ -66,7 +66,7 @@ class EnrichmentRetryHandler:
     @retry(
         retry=retry_if_exception_type(RETRYABLE_EXCEPTIONS),
         stop=stop_after_attempt(settings.enrichment_max_attempts),
-        wait=wait_exponential(
+        wait=wait_random_exponential(
             multiplier=settings.enrichment_backoff_multiplier,
             min=settings.enrichment_initial_retry_delay,
             max=settings.enrichment_max_retry_delay,

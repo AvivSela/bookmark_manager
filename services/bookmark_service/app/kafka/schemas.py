@@ -16,6 +16,7 @@ class BookmarkEventType(str, Enum):
 class BookmarkEvent(BaseModel):
     """Schema for bookmark events published to Kafka"""
 
+    schema_version: str = Field(default="1.0", description="Event schema version")
     event_id: UUID = Field(default_factory=uuid4, description="Unique event identifier")
     event_type: str = Field(..., description="Type of event (created/updated/deleted)")
     timestamp: datetime = Field(
@@ -37,6 +38,7 @@ class BookmarkEvent(BaseModel):
         Handles UUID and datetime serialization.
         """
         return {
+            "schema_version": self.schema_version,
             "event_id": str(self.event_id),
             "event_type": self.event_type,
             "timestamp": self.timestamp.isoformat(),

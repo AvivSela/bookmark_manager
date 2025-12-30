@@ -22,6 +22,11 @@ class EnrichmentService:
         self.shutdown_event = asyncio.Event()
         self.uvicorn_server = None
 
+    def set_consumer_in_app_state(self):
+        """Store consumer reference in FastAPI app state for health checks."""
+        from app.api import app
+        app.state.consumer = self.consumer
+
     async def run_uvicorn(self):
         """Run FastAPI server using uvicorn."""
         config = uvicorn.Config(
@@ -46,7 +51,13 @@ class EnrichmentService:
 
     async def start(self):
         """Start both FastAPI server and Kafka consumer concurrently."""
+        # Validate configuration on startup
+        settings = get_settings()  # This will fail early if required configs are missing
+
         logger.info(f"Starting {settings.app_name} v{settings.app_version}")
+
+        # Store consumer reference in app state for health checks
+        self.set_consumer_in_app_state()
 
         # Setup signal handlers
         for sig in (signal.SIGTERM, signal.SIGINT):
