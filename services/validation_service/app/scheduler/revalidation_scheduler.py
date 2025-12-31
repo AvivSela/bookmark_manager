@@ -10,7 +10,7 @@ from app.validators import (
     URLValidator,
     ValidationRetryHandler,
     BookmarkUpdateRetryHandler,
-    BookmarkServiceClient
+    BookmarkServiceClient,
 )
 from app.kafka.producer import ValidationEventProducer
 from app.kafka.schemas import ValidationCompletedEvent
@@ -42,7 +42,7 @@ class RevalidationScheduler:
             id="revalidate_bookmarks",
             name="Periodic bookmark revalidation",
             replace_existing=True,
-            max_instances=1  # Prevent overlapping runs
+            max_instances=1,  # Prevent overlapping runs
         )
 
         self.scheduler.start()
@@ -70,8 +70,7 @@ class RevalidationScheduler:
             # Fetch bookmarks needing validation
             # Note: This assumes bookmark service supports filtering by needs_validation
             bookmarks = await self.bookmark_client.get_bookmarks(
-                needs_validation=True,
-                limit=settings.revalidation_batch_size
+                needs_validation=True, limit=settings.revalidation_batch_size
             )
 
             if not bookmarks:
@@ -89,8 +88,7 @@ class RevalidationScheduler:
 
             # Run validations concurrently
             await asyncio.gather(
-                *[validate_bookmark(b) for b in bookmarks],
-                return_exceptions=True
+                *[validate_bookmark(b) for b in bookmarks], return_exceptions=True
             )
 
             logger.info(f"Completed revalidation of {len(bookmarks)} bookmarks")
@@ -114,18 +112,13 @@ class RevalidationScheduler:
 
             # Step 1: Validate URL with retry
             validation_result = await ValidationRetryHandler.validate_with_retry(
-                self.validator,
-                bookmark_id,
-                url
+                self.validator, bookmark_id, url
             )
 
             # Step 2: Update bookmark via API with retry
             try:
                 await BookmarkUpdateRetryHandler.update_with_retry(
-                    self.bookmark_client,
-                    bookmark_id,
-                    str(user_id),
-                    validation_result
+                    self.bookmark_client, bookmark_id, str(user_id), validation_result
                 )
             except Exception as e:
                 logger.error(
@@ -141,7 +134,7 @@ class RevalidationScheduler:
                 validation_http_status=validation_result.http_status,
                 validation_final_url=validation_result.final_url,
                 validation_error_message=validation_result.error_message,
-                validation_checked_at=validation_result.checked_at
+                validation_checked_at=validation_result.checked_at,
             )
 
             await self.producer.publish_validation_event(validation_event)
@@ -154,5 +147,5 @@ class RevalidationScheduler:
         except Exception as e:
             logger.error(
                 f"Error revalidating bookmark {bookmark_data.get('id', 'unknown')}: {e}",
-                exc_info=True
+                exc_info=True,
             )

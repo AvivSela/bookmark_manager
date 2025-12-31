@@ -22,7 +22,7 @@ class BookmarkCreatedEvent(BaseModel):
 class ValidationCompletedEvent(BaseModel):
     """Event schema for validation.completed events published to Kafka."""
 
-    event_id: UUID = Field(default_factory=lambda: __import__('uuid').uuid4())
+    event_id: UUID = Field(default_factory=lambda: __import__("uuid").uuid4())
     event_type: str = "validation.completed"
     timestamp: datetime = Field(default_factory=lambda: datetime.utcnow())
     bookmark_id: UUID
@@ -34,7 +34,4 @@ class ValidationCompletedEvent(BaseModel):
     validation_checked_at: datetime
 
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            UUID: lambda v: str(v)
-        }
+        json_encoders = {datetime: lambda v: v.isoformat(), UUID: lambda v: str(v)}

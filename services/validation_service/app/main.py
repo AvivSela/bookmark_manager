@@ -16,8 +16,7 @@ from app.routes.validation import set_dependencies
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -114,11 +113,7 @@ async def lifespan(app: FastAPI):
 
 
 # Create FastAPI app
-app = FastAPI(
-    title=settings.app_name,
-    version=settings.app_version,
-    lifespan=lifespan
-)
+app = FastAPI(title=settings.app_name, version=settings.app_version, lifespan=lifespan)
 
 # Register routes
 app.include_router(health_router)
@@ -131,7 +126,7 @@ async def root():
     return {
         "service": settings.app_name,
         "version": settings.app_version,
-        "status": "running"
+        "status": "running",
     }
 
 
@@ -152,5 +147,5 @@ if __name__ == "__main__":
         host=settings.host,
         port=settings.port,
         log_level="info",
-        access_log=True
+        access_log=True,
     )

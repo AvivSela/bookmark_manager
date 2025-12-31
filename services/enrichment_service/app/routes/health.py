@@ -11,8 +11,7 @@ logger = logging.getLogger(__name__)
 
 @router.get("/health")
 async def health_check(
-    request: Request,
-    db: AsyncSession = Depends(get_db)
+    request: Request, db: AsyncSession = Depends(get_db)
 ) -> dict[str, str]:
     """
     Health check endpoint that verifies:
@@ -45,7 +44,9 @@ async def health_check(
         if consumer.status == ConsumerStatus.HEALTHY:
             # Additional check: ensure consumer polled recently (within 5 minutes)
             if consumer.last_successful_poll:
-                time_since_poll = datetime.now(timezone.utc) - consumer.last_successful_poll
+                time_since_poll = (
+                    datetime.now(timezone.utc) - consumer.last_successful_poll
+                )
                 if time_since_poll > timedelta(minutes=5):
                     kafka_status = "stale"
                 else:
@@ -64,15 +65,19 @@ async def health_check(
             if consumer.last_error:
                 logger.error(
                     "Health check - Kafka consumer unhealthy",
-                    extra={"error": consumer.last_error}
+                    extra={"error": consumer.last_error},
                 )
 
     # Determine overall health
-    overall_status = "healthy" if (db_status == "connected" and kafka_status == "connected") else "unhealthy"
+    overall_status = (
+        "healthy"
+        if (db_status == "connected" and kafka_status == "connected")
+        else "unhealthy"
+    )
 
     return {
         "status": overall_status,
         "database": db_status,
         "kafka": kafka_status,
-        "service": "enrichment"
+        "service": "enrichment",
     }

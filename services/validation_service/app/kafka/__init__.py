@@ -8,5 +8,5 @@ __all__ = [
     "ValidationEventProducer",
     "BookmarkConsumer",
     "BookmarkCreatedEvent",
-    "ValidationCompletedEvent"
+    "ValidationCompletedEvent",
 ]

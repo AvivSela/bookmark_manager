@@ -62,7 +62,9 @@ class MetadataFetcher:
                     chunks.append(chunk)
 
                 # Decode content
-                html = b"".join(chunks).decode(response.encoding or "utf-8", errors="replace")
+                html = b"".join(chunks).decode(
+                    response.encoding or "utf-8", errors="replace"
+                )
                 soup = BeautifulSoup(html, "lxml")
 
             # Extract Open Graph tags

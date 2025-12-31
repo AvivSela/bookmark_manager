@@ -17,6 +17,7 @@ settings = get_settings()
 
 class ConsumerStatus(Enum):
     """Consumer health status states."""
+
     NOT_STARTED = "not_started"
     STARTING = "starting"
     HEALTHY = "healthy"

@@ -2,10 +2,14 @@ from fastapi import Header, HTTPException, status
 from typing import Annotated
 import re
 
-TENANT_ID_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE)
+TENANT_ID_PATTERN = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE
+)
 
 
-async def get_current_tenant_id(x_tenant_id: Annotated[str | None, Header()] = None) -> str:
+async def get_current_tenant_id(
+    x_tenant_id: Annotated[str | None, Header()] = None,
+) -> str:
     """
     Extract and validate tenant_id from X-Tenant-ID header.
 
@@ -20,12 +24,14 @@ async def get_current_tenant_id(x_tenant_id: Annotated[str | None, Header()] = N
     """
     if x_tenant_id is None:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing X-Tenant-ID header"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing X-Tenant-ID header",
         )
 
     if not x_tenant_id.strip():
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="X-Tenant-ID cannot be empty"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="X-Tenant-ID cannot be empty",
         )
 
     if len(x_tenant_id) > 255:

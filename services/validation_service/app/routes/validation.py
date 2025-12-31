@@ -5,12 +5,16 @@ import asyncio
 from uuid import UUID
 from fastapi import APIRouter, HTTPException, Depends, Header
 from typing import Optional, List
-from app.schemas.validation import ValidationResult, ValidationResultResponse, BatchValidationResponse
+from app.schemas.validation import (
+    ValidationResult,
+    ValidationResultResponse,
+    BatchValidationResponse,
+)
 from app.validators import (
     URLValidator,
     ValidationRetryHandler,
     BookmarkUpdateRetryHandler,
-    BookmarkServiceClient
+    BookmarkServiceClient,
 )
 from app.kafka.producer import ValidationEventProducer
 from app.kafka.schemas import ValidationCompletedEvent
@@ -24,7 +28,11 @@ _bookmark_client: Optional[BookmarkServiceClient] = None
 _producer: Optional[ValidationEventProducer] = None
 
 
-def set_dependencies(validator: URLValidator, client: BookmarkServiceClient, producer: ValidationEventProducer):
+def set_dependencies(
+    validator: URLValidator,
+    client: BookmarkServiceClient,
+    producer: ValidationEventProducer,
+):
     """Set shared dependencies for route handlers."""
     global _validator, _bookmark_client, _producer
     _validator = validator
@@ -34,8 +42,7 @@ def set_dependencies(validator: URLValidator, client: BookmarkServiceClient, pro
 
 @router.post("/{bookmark_id}", response_model=ValidationResultResponse)
 async def validate_bookmark(
-    bookmark_id: UUID,
-    x_user_id: str = Header(..., alias="X-User-ID")
+    bookmark_id: UUID, x_user_id: str = Header(..., alias="X-User-ID")
 ):
     """
     Validate a specific bookmark on-demand.
@@ -62,18 +69,13 @@ async def validate_bookmark(
 
         # Validate URL with retry
         validation_result = await ValidationRetryHandler.validate_with_retry(
-            _validator,
-            bookmark_id,
-            url
+            _validator, bookmark_id, url
         )
 
         # Update bookmark via API with retry
         try:
             await BookmarkUpdateRetryHandler.update_with_retry(
-                _bookmark_client,
-                bookmark_id,
-                x_user_id,
-                validation_result
+                _bookmark_client, bookmark_id, x_user_id, validation_result
             )
         except Exception as e:
             logger.error(f"Failed to update bookmark {bookmark_id}: {e}")
@@ -87,14 +89,13 @@ async def validate_bookmark(
             validation_http_status=validation_result.http_status,
             validation_final_url=validation_result.final_url,
             validation_error_message=validation_result.error_message,
-            validation_checked_at=validation_result.checked_at
+            validation_checked_at=validation_result.checked_at,
         )
 
         await _producer.publish_validation_event(validation_event)
 
         return ValidationResultResponse(
-            success=True,
-            validation_result=validation_result
+            success=True, validation_result=validation_result
         )
 
     except HTTPException:
@@ -106,8 +107,7 @@ async def validate_bookmark(
 
 @router.post("/revalidate-all", response_model=BatchValidationResponse)
 async def revalidate_all(
-    limit: int = 100,
-    x_user_id: Optional[str] = Header(None, alias="X-User-ID")
+    limit: int = 100, x_user_id: Optional[str] = Header(None, alias="X-User-ID")
 ):
     """
     Trigger revalidation of all bookmarks needing validation.
@@ -127,18 +127,12 @@ async def revalidate_all(
     try:
         # Fetch bookmarks needing validation
         bookmarks = await _bookmark_client.get_bookmarks(
-            needs_validation=True,
-            limit=limit,
-            user_id=x_user_id
+            needs_validation=True, limit=limit, user_id=x_user_id
         )
 
         if not bookmarks:
             return BatchValidationResponse(
-                success=True,
-                total_processed=0,
-                successful=0,
-                failed=0,
-                results=[]
+                success=True, total_processed=0, successful=0, failed=0, results=[]
             )
 
         logger.info(f"Manual revalidation triggered for {len(bookmarks)} bookmarks")
@@ -158,19 +152,16 @@ async def revalidate_all(
                     user_id = str(bookmark_data["user_id"])
 
                     # Validate URL
-                    validation_result = await ValidationRetryHandler.validate_with_retry(
-                        _validator,
-                        bookmark_id,
-                        url
+                    validation_result = (
+                        await ValidationRetryHandler.validate_with_retry(
+                            _validator, bookmark_id, url
+                        )
                     )
 
                     # Update bookmark
                     try:
                         await BookmarkUpdateRetryHandler.update_with_retry(
-                            _bookmark_client,
-                            bookmark_id,
-                            user_id,
-                            validation_result
+                            _bookmark_client, bookmark_id, user_id, validation_result
                         )
                     except Exception as e:
                         logger.error(f"Failed to update bookmark {bookmark_id}: {e}")
@@ -183,7 +174,7 @@ async def revalidate_all(
                         validation_http_status=validation_result.http_status,
                         validation_final_url=validation_result.final_url,
                         validation_error_message=validation_result.error_message,
-                        validation_checked_at=validation_result.checked_at
+                        validation_checked_at=validation_result.checked_at,
                     )
 
                     await _producer.publish_validation_event(validation_event)
@@ -192,14 +183,15 @@ async def revalidate_all(
                     return validation_result
 
                 except Exception as e:
-                    logger.error(f"Error validating bookmark {bookmark_data.get('id')}: {e}")
+                    logger.error(
+                        f"Error validating bookmark {bookmark_data.get('id')}: {e}"
+                    )
                     failed += 1
                     return None
 
         # Run validations concurrently
         validation_results = await asyncio.gather(
-            *[validate_bookmark_task(b) for b in bookmarks],
-            return_exceptions=True
+            *[validate_bookmark_task(b) for b in bookmarks], return_exceptions=True
         )
 
         # Filter out None results
@@ -210,18 +202,21 @@ async def revalidate_all(
             total_processed=len(bookmarks),
             successful=successful,
             failed=failed,
-            results=results
+            results=results,
         )
 
     except Exception as e:
         logger.error(f"Error during batch revalidation: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Batch validation failed: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Batch validation failed: {str(e)}"
+        )
 
 
 @router.get("/status")
 async def validation_status():
     """Get validation service status."""
     from app.config import get_settings
+
     settings = get_settings()
 
     return {
@@ -229,5 +224,5 @@ async def validation_status():
         "scheduler_enabled": settings.enable_scheduler,
         "revalidation_interval_hours": settings.revalidation_interval_hours,
         "validation_timeout_seconds": settings.validation_timeout_seconds,
-        "max_attempts": settings.validation_max_attempts
+        "max_attempts": settings.validation_max_attempts,
     }

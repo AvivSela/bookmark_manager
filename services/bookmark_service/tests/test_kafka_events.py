@@ -157,5 +157,11 @@ class TestKafkaEventPublishing:
 
         # Verify both events have correct tenant_ids
         assert len(mock_kafka_producer) == 2
-        assert mock_kafka_producer[0]["data"]["tenant_id"] == "550e8400-e29b-41d4-a716-446655440007"
-        assert mock_kafka_producer[1]["data"]["tenant_id"] == "550e8400-e29b-41d4-a716-446655440008"
+        assert (
+            mock_kafka_producer[0]["data"]["tenant_id"]
+            == "550e8400-e29b-41d4-a716-446655440007"
+        )
+        assert (
+            mock_kafka_producer[1]["data"]["tenant_id"]
+            == "550e8400-e29b-41d4-a716-446655440008"
+        )

@@ -3,7 +3,7 @@
 from app.validators.url_validator import URLValidator
 from app.validators.retry_handler import (
     ValidationRetryHandler,
-    BookmarkUpdateRetryHandler
+    BookmarkUpdateRetryHandler,
 )
 from app.validators.bookmark_service_client import BookmarkServiceClient
 
@@ -11,5 +11,5 @@ __all__ = [
     "URLValidator",
     "ValidationRetryHandler",
     "BookmarkUpdateRetryHandler",
-    "BookmarkServiceClient"
+    "BookmarkServiceClient",
 ]

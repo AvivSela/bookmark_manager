@@ -265,6 +265,9 @@ class TestMultiTenancy:
         # List bookmarks
         response = await client.get("/bookmarks")
         assert response.status_code == 200
-        assert response.json()["items"][0]["tenant_id"] == "550e8400-e29b-41d4-a716-446655440003"
+        assert (
+            response.json()["items"][0]["tenant_id"]
+            == "550e8400-e29b-41d4-a716-446655440003"
+        )
 
         await client.aclose()

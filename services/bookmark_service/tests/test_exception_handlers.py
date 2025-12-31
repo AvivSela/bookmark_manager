@@ -72,9 +72,7 @@ class TestHTTPExceptionHandler:
         assert len(response.headers["X-Request-ID"]) > 0
 
     @pytest.mark.asyncio
-    async def test_http_404_exception_includes_request_id(
-        self, client: AsyncClient
-    ):
+    async def test_http_404_exception_includes_request_id(self, client: AsyncClient):
         """
         Test that HTTP 404 errors include X-Request-ID.
 
@@ -86,7 +84,8 @@ class TestHTTPExceptionHandler:
         # This UUID won't exist in the test database
         non_existent_uuid = "00000000-0000-0000-0000-000000000001"
         response = await client.get(
-            f"/bookmarks/{non_existent_uuid}", headers={"X-Request-ID": custom_request_id}
+            f"/bookmarks/{non_existent_uuid}",
+            headers={"X-Request-ID": custom_request_id},
         )
 
         # Assert HTTP 404 is returned

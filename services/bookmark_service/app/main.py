@@ -91,9 +91,7 @@ async def validation_exception_handler(
 
 
 @app.exception_handler(HTTPException)
-async def http_exception_handler(
-    request: Request, exc: HTTPException
-) -> JSONResponse:
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     """Handle HTTP exceptions with structured logging and request correlation.
 
     Logs HTTP exceptions with context (request ID, method, path, status code)
@@ -117,14 +115,12 @@ async def http_exception_handler(
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail},
-        headers={"X-Request-ID": request_id}
+        headers={"X-Request-ID": request_id},
     )
 
 
 @app.exception_handler(Exception)
-async def global_exception_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle all unexpected exceptions with generic error message."""
     # Get request ID if available
     request_id = getattr(request.state, "request_id", None)
@@ -145,7 +141,7 @@ async def global_exception_handler(
     # Return generic error to client (no sensitive information)
     response = JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": "An unexpected error occurred. Please try again later."}
+        content={"detail": "An unexpected error occurred. Please try again later."},
     )
 
     # Add request ID to error response

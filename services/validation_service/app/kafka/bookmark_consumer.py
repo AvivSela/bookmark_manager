@@ -12,7 +12,7 @@ from app.validators import (
     URLValidator,
     ValidationRetryHandler,
     BookmarkUpdateRetryHandler,
-    BookmarkServiceClient
+    BookmarkServiceClient,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,9 +41,9 @@ class BookmarkConsumer:
                 group_id=self.group_id,
                 auto_offset_reset=settings.kafka_auto_offset_reset,
                 enable_auto_commit=True,
-                value_deserializer=lambda m: json.loads(m.decode('utf-8')),
+                value_deserializer=lambda m: json.loads(m.decode("utf-8")),
                 session_timeout_ms=settings.kafka_session_timeout_ms,
-                max_poll_records=settings.kafka_max_poll_records
+                max_poll_records=settings.kafka_max_poll_records,
             )
             await self.consumer.start()
             logger.info(
@@ -96,8 +96,7 @@ class BookmarkConsumer:
 
                 except Exception as e:
                     logger.error(
-                        f"Error processing message from Kafka: {e}",
-                        exc_info=True
+                        f"Error processing message from Kafka: {e}", exc_info=True
                     )
                     # Continue processing other messages
 
@@ -119,9 +118,7 @@ class BookmarkConsumer:
             logger.info(f"Validating URL for bookmark {event.bookmark_id}: {event.url}")
 
             validation_result = await ValidationRetryHandler.validate_with_retry(
-                self.validator,
-                event.bookmark_id,
-                event.url
+                self.validator, event.bookmark_id, event.url
             )
 
             logger.info(
@@ -136,7 +133,7 @@ class BookmarkConsumer:
                     self.bookmark_client,
                     event.bookmark_id,
                     str(event.user_id),
-                    validation_result
+                    validation_result,
                 )
                 logger.info(f"Updated bookmark {event.bookmark_id} via API")
 
@@ -154,7 +151,7 @@ class BookmarkConsumer:
                 validation_http_status=validation_result.http_status,
                 validation_final_url=validation_result.final_url,
                 validation_error_message=validation_result.error_message,
-                validation_checked_at=validation_result.checked_at
+                validation_checked_at=validation_result.checked_at,
             )
 
             await self.producer.publish_validation_event(validation_event)
@@ -167,6 +164,6 @@ class BookmarkConsumer:
         except Exception as e:
             logger.error(
                 f"Error processing bookmark event {event.bookmark_id}: {e}",
-                exc_info=True
+                exc_info=True,
             )
             raise

@@ -19,12 +19,13 @@ class EnrichmentService:
 
     def __init__(self):
         self.consumer = BookmarkEnrichmentConsumer()
-        self.shutdown_event = asyncio.Event()
+        self._shutdown_initiated = False
         self.uvicorn_server = None
 
     def set_consumer_in_app_state(self):
         """Store consumer reference in FastAPI app state for health checks."""
         from app.api import app
+
         app.state.consumer = self.consumer
 
     async def run_uvicorn(self):
@@ -51,35 +52,41 @@ class EnrichmentService:
 
     async def start(self):
         """Start both FastAPI server and Kafka consumer concurrently."""
-        # Validate configuration on startup
-        settings = get_settings()  # This will fail early if required configs are missing
-
         logger.info(f"Starting {settings.app_name} v{settings.app_version}")
 
         # Store consumer reference in app state for health checks
         self.set_consumer_in_app_state()
 
         # Setup signal handlers
+        loop = asyncio.get_event_loop()
         for sig in (signal.SIGTERM, signal.SIGINT):
-            asyncio.get_event_loop().add_signal_handler(
-                sig, lambda: asyncio.create_task(self.shutdown())
-            )
+            loop.add_signal_handler(sig, lambda: loop.create_task(self.shutdown()))
 
         try:
             # Run both FastAPI server and consumer concurrently
-            await asyncio.gather(
-                self.run_uvicorn(), self.run_consumer(), return_exceptions=True
+            results = await asyncio.gather(
+                self.run_uvicorn(), self.run_consumer(), return_exceptions=False
             )
+            # Check if any task failed
+            for i, result in enumerate(results):
+                if isinstance(result, Exception):
+                    task_name = ["FastAPI server", "Kafka consumer"][i]
+                    logger.error(
+                        f"{task_name} crashed with error: {result}", exc_info=result
+                    )
+                    # Re-raise to trigger shutdown
+                    raise result
+
         except asyncio.CancelledError:
-            logger.info("Service cancelled")
+            logger.info("Graceful shutdown initiated via cancellation")
         finally:
             await self.shutdown()
 
     async def shutdown(self):
         """Graceful shutdown of both FastAPI and consumer."""
-        if not self.shutdown_event.is_set():
+        if not self._shutdown_initiated:
             logger.info("Shutting down gracefully...")
-            self.shutdown_event.set()
+            self._shutdown_initiated = True
 
             # Shutdown uvicorn server
             if self.uvicorn_server:

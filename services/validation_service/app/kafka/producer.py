@@ -24,8 +24,8 @@ class ValidationEventProducer:
         try:
             self.producer = AIOKafkaProducer(
                 bootstrap_servers=self.bootstrap_servers,
-                value_serializer=lambda v: json.dumps(v).encode('utf-8'),
-                compression_type="gzip"
+                value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+                compression_type="gzip",
             )
             await self.producer.start()
             logger.info(f"Kafka producer started for topic: {self.topic}")
@@ -57,13 +57,13 @@ class ValidationEventProducer:
 
         try:
             # Convert Pydantic model to dict for serialization
-            event_dict = event.model_dump(mode='json')
+            event_dict = event.model_dump(mode="json")
 
             # Send to Kafka
             await self.producer.send_and_wait(
                 topic=self.topic,
                 value=event_dict,
-                key=str(event.bookmark_id).encode('utf-8')
+                key=str(event.bookmark_id).encode("utf-8"),
             )
 
             logger.info(

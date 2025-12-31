@@ -17,7 +17,5 @@ class HealthResponse(BaseModel):
 async def health_check():
     """Health check endpoint for container orchestration."""
     return HealthResponse(
-        status="healthy",
-        service="validation-service",
-        timestamp=datetime.utcnow()
+        status="healthy", service="validation-service", timestamp=datetime.utcnow()
     )
