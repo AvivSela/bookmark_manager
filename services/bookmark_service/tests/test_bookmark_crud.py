@@ -149,8 +149,8 @@ class TestBookmarkCRUD:
 
         # Verify response structure
         assert "id" in created_bookmark
-        assert "user_id" in created_bookmark
-        assert created_bookmark["user_id"] == "test-user-123"
+        assert "tenant_id" in created_bookmark
+        assert created_bookmark["tenant_id"] == "550e8400-e29b-41d4-a716-446655440000"
         # Pydantic's HttpUrl adds trailing slash - compare normalized URLs
         assert created_bookmark["url"].rstrip("/") == sample_bookmark_data[
             "url"

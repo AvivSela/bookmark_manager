@@ -37,7 +37,7 @@ class BookmarkEnrichmentConsumer:
         self.last_successful_poll = None
 
     async def start(self):
-        """Start Kafka consumer."""
+        """Start Kafka consumer and HTTP client."""
         self.status = ConsumerStatus.STARTING
         try:
             self.consumer = AIOKafkaConsumer(
@@ -50,6 +50,8 @@ class BookmarkEnrichmentConsumer:
                 value_deserializer=lambda m: json.loads(m.decode("utf-8")),
             )
             await self.consumer.start()
+            # Start bookmark service client for connection pooling
+            await self.bookmark_client.start()
             self.status = ConsumerStatus.HEALTHY
             self.last_error = None
             logger.info(f"Started consumer for topic {settings.kafka_topic}")
@@ -59,11 +61,13 @@ class BookmarkEnrichmentConsumer:
             raise
 
     async def stop(self):
-        """Stop Kafka consumer."""
+        """Stop Kafka consumer and HTTP client."""
         if self.consumer:
             await self.consumer.stop()
-            self.status = ConsumerStatus.STOPPED
-            logger.info("Stopped consumer")
+        # Close bookmark service client
+        await self.bookmark_client.close()
+        self.status = ConsumerStatus.STOPPED
+        logger.info("Stopped consumer")
 
     async def consume_and_enrich(self):
         """Main consumer loop."""
@@ -74,7 +78,7 @@ class BookmarkEnrichmentConsumer:
                     # Parse event
                     event = BookmarkEvent(**message.value)
                     logger.info(
-                        f"Processing bookmark {event.data.get('id')} for user {event.data.get('user_id')}"
+                        f"Processing bookmark {event.data.get('id')} for tenant {event.data.get('tenant_id')}"
                     )
 
                     # Enrich with retry
@@ -96,11 +100,11 @@ class BookmarkEnrichmentConsumer:
             # Extract event data
             url = event.data.get("url")
             bookmark_id = event.data.get("id")
-            user_id = event.data.get("user_id")
+            tenant_id = event.data.get("tenant_id")
 
-            if not url or not bookmark_id or not user_id:
+            if not url or not bookmark_id or not tenant_id:
                 logger.error(
-                    f"Missing required fields in event: url={url}, id={bookmark_id}, user_id={user_id}"
+                    f"Missing required fields in event: url={url}, id={bookmark_id}, tenant_id={tenant_id}"
                 )
                 return
 
@@ -111,7 +115,7 @@ class BookmarkEnrichmentConsumer:
 
             # Update bookmark via API with retry
             await self.retry_handler.update_with_retry(
-                self.bookmark_client, UUID(bookmark_id), user_id, enrichment_result
+                self.bookmark_client, UUID(bookmark_id), tenant_id, enrichment_result
             )
 
             logger.info(f"Successfully enriched bookmark {bookmark_id}")

@@ -88,7 +88,7 @@ class BookmarkResponse(BookmarkBase):
     """Response schema with all fields including timestamps."""
 
     id: UUID
-    user_id: str
+    tenant_id: str
     created_time: datetime
     changed_time: datetime
 
@@ -99,7 +99,7 @@ class BookmarkResponse(BookmarkBase):
     og_type: Optional[str] = None
     og_site_name: Optional[str] = None
     meta_description: Optional[str] = None
-    favicon_url: Optional[str] = None
+    # favicon_url: Optional[str] = None
 
     # Validation fields
     validation_status: Optional[str] = None
@@ -115,7 +115,6 @@ class BookmarkListResponse(BaseModel):
     """Paginated list response."""
 
     items: list[BookmarkResponse]
-    total: int
     page: int
     page_size: int
-    total_pages: int
+    has_next: bool

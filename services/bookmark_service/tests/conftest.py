@@ -1,6 +1,6 @@
 import pytest
 import asyncio
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator, Generator, Optional
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -17,15 +17,15 @@ TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 
 @pytest.fixture
-def test_user_id() -> str:
-    """Default test user ID."""
-    return "test-user-123"
+def test_tenant_id() -> str:
+    """Default test tenant ID."""
+    return "550e8400-e29b-41d4-a716-446655440000"
 
 
 @pytest.fixture
-def test_user_id_2() -> str:
-    """Second test user for multi-user tests."""
-    return "test-user-456"
+def test_tenant_id_2() -> str:
+    """Second test tenant for multi-tenant tests."""
+    return "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
 
 
 # SQLite doesn't have a native UUID type, so we need to register type decorators
@@ -86,12 +86,12 @@ async def test_db() -> AsyncGenerator[AsyncSession, None]:
 
 @pytest.fixture(scope="function")
 async def client(
-    test_db: AsyncSession, test_user_id: str
+    test_db: AsyncSession, test_tenant_id: str
 ) -> AsyncGenerator[AsyncClient, None]:
     """
-    Create a test client with overridden database dependency and user authentication.
+    Create a test client with overridden database dependency and tenant authentication.
 
-    This ensures all API requests use the test database and default test user.
+    This ensures all API requests use the test database and default test tenant.
     """
 
     async def override_get_db():
@@ -100,11 +100,11 @@ async def client(
     # Override the database dependency
     app.dependency_overrides[get_db] = override_get_db
 
-    # Create async HTTP client with user authentication header
+    # Create async HTTP client with tenant authentication header
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",
-        headers={"X-User-ID": test_user_id},
+        headers={"X-Tenant-ID": test_tenant_id},
     ) as ac:
         yield ac
 
@@ -114,20 +114,20 @@ async def client(
 
 @pytest.fixture
 def authenticated_client(test_db: AsyncSession):
-    """Factory to create clients with different user IDs for multi-tenancy testing.
+    """Factory to create clients with different tenant IDs for multi-tenancy testing.
 
     Usage:
-        client1 = await authenticated_client("user-1")
-        client2 = await authenticated_client("user-2")
+        client1 = await authenticated_client("550e8400-e29b-41d4-a716-446655440001")
+        client2 = await authenticated_client("550e8400-e29b-41d4-a716-446655440002")
 
     Args:
         test_db: Test database session.
 
     Returns:
-        Callable that creates AsyncClient instances with custom user IDs.
+        Callable that creates AsyncClient instances with custom tenant IDs.
     """
 
-    async def _create_client(user_id: str) -> AsyncClient:
+    async def _create_client(tenant_id: str) -> AsyncClient:
         async def override_get_db():
             yield test_db
 
@@ -136,7 +136,7 @@ def authenticated_client(test_db: AsyncSession):
         return AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://test",
-            headers={"X-User-ID": user_id},
+            headers={"X-Tenant-ID": tenant_id},
         )
 
     return _create_client
@@ -165,7 +165,7 @@ async def create_bookmark(test_db: AsyncSession):
             url="https://test.com",
             title="Test",
             description="Description",
-            user_id="test-user-123"
+            tenant_id="550e8400-e29b-41d4-a716-446655440000"
         )
 
     Args:
@@ -179,10 +179,10 @@ async def create_bookmark(test_db: AsyncSession):
         url: str = "https://example.com",
         title: str = "Test Bookmark",
         description: Optional[str] = None,
-        user_id: str = "test-user-123",
+        tenant_id: str = "550e8400-e29b-41d4-a716-446655440000",
     ) -> Bookmark:
         bookmark = Bookmark(
-            url=url, title=title, description=description, user_id=user_id
+            url=url, title=title, description=description, tenant_id=tenant_id
         )
         test_db.add(bookmark)
         await test_db.commit()

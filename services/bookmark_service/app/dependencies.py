@@ -2,42 +2,42 @@ from fastapi import Header, HTTPException, status
 from typing import Annotated
 import re
 
-USER_ID_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
+TENANT_ID_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE)
 
 
-async def get_current_user_id(x_user_id: Annotated[str | None, Header()] = None) -> str:
+async def get_current_tenant_id(x_tenant_id: Annotated[str | None, Header()] = None) -> str:
     """
-    Extract and validate user_id from X-User-ID header.
+    Extract and validate tenant_id from X-Tenant-ID header.
 
     Args:
-        x_user_id: User ID from X-User-ID header
+        x_tenant_id: Tenant ID from X-Tenant-ID header
 
     Returns:
-        str: Validated user ID
+        str: Validated tenant ID
 
     Raises:
         HTTPException: 401 if header is missing, empty, too long, or contains invalid characters
     """
-    if x_user_id is None:
+    if x_tenant_id is None:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing X-User-ID header"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing X-Tenant-ID header"
         )
 
-    if not x_user_id.strip():
+    if not x_tenant_id.strip():
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="X-User-ID cannot be empty"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="X-Tenant-ID cannot be empty"
         )
 
-    if len(x_user_id) > 255:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="X-User-ID exceeds maximum length of 255 characters",
-        )
-
-    if not USER_ID_PATTERN.match(x_user_id):
+    if len(x_tenant_id) > 255:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="X-User-ID contains invalid characters (allowed: a-z, A-Z, 0-9, _, -)",
+            detail="X-Tenant-ID exceeds maximum length of 255 characters",
         )
 
-    return x_user_id
+    if not TENANT_ID_PATTERN.match(x_tenant_id):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="X-Tenant-ID must be a valid UUID format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)",
+        )
+
+    return x_tenant_id

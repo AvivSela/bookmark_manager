@@ -74,7 +74,7 @@ class EnrichmentRetryHandler:
         reraise=True,
     )
     async def update_with_retry(
-        self, client, bookmark_id: UUID, user_id: str, enrichment_result
+        self, client, bookmark_id: UUID, tenant_id: str, enrichment_result
     ):
         """
         Update bookmark via API with retry logic.
@@ -82,7 +82,7 @@ class EnrichmentRetryHandler:
         Args:
             client: BookmarkServiceClient instance
             bookmark_id: Bookmark UUID
-            user_id: User ID for authentication
+            tenant_id: Tenant ID for authentication
             enrichment_result: EnrichmentResult with metadata
 
         Raises:
@@ -91,7 +91,7 @@ class EnrichmentRetryHandler:
         """
         try:
             return await client.update_bookmark_enrichment(
-                bookmark_id, user_id, enrichment_result
+                bookmark_id, tenant_id, enrichment_result
             )
         except httpx.HTTPStatusError as e:
             # Don't retry 4xx errors (client errors)

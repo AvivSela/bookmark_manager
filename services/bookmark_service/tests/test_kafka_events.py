@@ -12,7 +12,7 @@ class TestKafkaEventPublishing:
         self, authenticated_client, mock_kafka_producer, sample_bookmark_data
     ):
         """Verify bookmark.created event is published on successful creation."""
-        client = await authenticated_client("test-user-123")
+        client = await authenticated_client("550e8400-e29b-41d4-a716-446655440001")
 
         response = await client.post("/bookmarks", json=sample_bookmark_data)
         assert response.status_code == 201
@@ -26,7 +26,7 @@ class TestKafkaEventPublishing:
             "/"
         )
         assert event["data"]["title"] == sample_bookmark_data["title"]
-        assert event["data"]["user_id"] == "test-user-123"
+        assert event["data"]["tenant_id"] == "550e8400-e29b-41d4-a716-446655440001"
         assert "id" in event["data"]
         assert "created_time" in event["data"]
         assert "changed_time" in event["data"]
@@ -35,7 +35,7 @@ class TestKafkaEventPublishing:
         self, authenticated_client, mock_kafka_producer, sample_bookmark_data
     ):
         """Verify bookmark.updated event is published on successful update."""
-        client = await authenticated_client("test-user-456")
+        client = await authenticated_client("550e8400-e29b-41d4-a716-446655440002")
 
         # Create bookmark first
         response = await client.post("/bookmarks", json=sample_bookmark_data)
@@ -55,14 +55,14 @@ class TestKafkaEventPublishing:
         event = mock_kafka_producer[0]
         assert event["event_type"] == "updated"
         assert event["data"]["title"] == "Updated Title"
-        assert event["data"]["user_id"] == "test-user-456"
+        assert event["data"]["tenant_id"] == "550e8400-e29b-41d4-a716-446655440002"
         assert event["data"]["id"] == bookmark_id
 
     async def test_delete_bookmark_publishes_deleted_event(
         self, authenticated_client, mock_kafka_producer, sample_bookmark_data
     ):
         """Verify bookmark.deleted event is published on successful deletion."""
-        client = await authenticated_client("test-user-789")
+        client = await authenticated_client("550e8400-e29b-41d4-a716-446655440003")
 
         # Create bookmark first
         response = await client.post("/bookmarks", json=sample_bookmark_data)
@@ -83,16 +83,16 @@ class TestKafkaEventPublishing:
         event = mock_kafka_producer[0]
         assert event["event_type"] == "deleted"
         assert event["data"]["id"] == bookmark_id
-        assert event["data"]["user_id"] == "test-user-789"
+        assert event["data"]["tenant_id"] == "550e8400-e29b-41d4-a716-446655440003"
         assert event["data"]["url"] == bookmark_url
         # Deleted events should only have minimal data
-        assert set(event["data"].keys()) == {"id", "user_id", "url"}
+        assert set(event["data"].keys()) == {"id", "tenant_id", "url"}
 
     async def test_duplicate_url_creation_does_not_publish_event(
         self, authenticated_client, mock_kafka_producer, sample_bookmark_data
     ):
         """Verify no event is published when creation fails due to duplicate URL."""
-        client = await authenticated_client("test-user-duplicate")
+        client = await authenticated_client("550e8400-e29b-41d4-a716-446655440004")
 
         # Create first bookmark
         response = await client.post("/bookmarks", json=sample_bookmark_data)
@@ -112,7 +112,7 @@ class TestKafkaEventPublishing:
         self, authenticated_client, mock_kafka_producer
     ):
         """Verify no event is published when update fails (404)."""
-        client = await authenticated_client("test-user-404")
+        client = await authenticated_client("550e8400-e29b-41d4-a716-446655440005")
 
         # Attempt to update non-existent bookmark
         response = await client.put(
@@ -128,7 +128,7 @@ class TestKafkaEventPublishing:
         self, authenticated_client, mock_kafka_producer
     ):
         """Verify no event is published when deletion fails (404)."""
-        client = await authenticated_client("test-user-404-delete")
+        client = await authenticated_client("550e8400-e29b-41d4-a716-446655440006")
 
         # Attempt to delete non-existent bookmark
         response = await client.delete(
@@ -142,20 +142,20 @@ class TestKafkaEventPublishing:
     async def test_events_include_correct_user_id(
         self, authenticated_client, mock_kafka_producer, sample_bookmark_data
     ):
-        """Verify events include the correct user_id from X-User-ID header."""
-        # Create bookmarks for different users
-        client1 = await authenticated_client("user-one")
-        client2 = await authenticated_client("user-two")
+        """Verify events include the correct tenant_id from X-Tenant-ID header."""
+        # Create bookmarks for different tenants
+        client1 = await authenticated_client("550e8400-e29b-41d4-a716-446655440007")
+        client2 = await authenticated_client("550e8400-e29b-41d4-a716-446655440008")
 
-        # User 1 creates a bookmark
+        # Tenant 1 creates a bookmark
         response1 = await client1.post("/bookmarks", json=sample_bookmark_data)
         assert response1.status_code == 201
 
-        # User 2 creates a bookmark with same URL (allowed for different users)
+        # Tenant 2 creates a bookmark with same URL (allowed for different tenants)
         response2 = await client2.post("/bookmarks", json=sample_bookmark_data)
         assert response2.status_code == 201
 
-        # Verify both events have correct user_ids
+        # Verify both events have correct tenant_ids
         assert len(mock_kafka_producer) == 2
-        assert mock_kafka_producer[0]["data"]["user_id"] == "user-one"
-        assert mock_kafka_producer[1]["data"]["user_id"] == "user-two"
+        assert mock_kafka_producer[0]["data"]["tenant_id"] == "550e8400-e29b-41d4-a716-446655440007"
+        assert mock_kafka_producer[1]["data"]["tenant_id"] == "550e8400-e29b-41d4-a716-446655440008"

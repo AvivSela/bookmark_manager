@@ -14,7 +14,7 @@ from app.schemas.bookmark import (
     BookmarkListResponse,
 )
 from app.config import get_settings
-from app.dependencies import get_current_user_id
+from app.dependencies import get_current_tenant_id
 from app.kafka import get_kafka_producer
 from app.kafka.producer import KafkaEventProducer
 
@@ -31,22 +31,21 @@ router = APIRouter(prefix="/bookmarks", tags=["bookmarks"])
 async def create_bookmark(
     bookmark: BookmarkCreate,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user_id),
+    tenant_id: str = Depends(get_current_tenant_id),
     kafka_producer: Optional[KafkaEventProducer] = Depends(get_kafka_producer),
 ) -> BookmarkResponse:
     """
     Create a new bookmark with the following fields:
-    - **url**: Valid HTTP/HTTPS URL (must be unique per user)
+    - **url**: Valid HTTP/HTTPS URL (must be unique per tenant)
     - **title**: Bookmark title (1-500 characters)
     - **description**: Optional description (max 5000 characters)
 
-    Requires X-User-ID header for authentication.
+    Requires X-Tenant-ID header for authentication.
     """
     try:
-        # Convert Pydantic model to dict and ensure URL is string
         bookmark_data = bookmark.model_dump()
-        bookmark_data["url"] = str(bookmark_data["url"])
-        bookmark_data["user_id"] = user_id
+        bookmark_data["url"] = str(bookmark.url)
+        bookmark_data["tenant_id"] = tenant_id
 
         db_bookmark = Bookmark(**bookmark_data)
         db.add(db_bookmark)
@@ -62,7 +61,8 @@ async def create_bookmark(
                 ),
             )
 
-        return db_bookmark
+        return BookmarkResponse.model_validate(db_bookmark)
+
     except IntegrityError:
         await db.rollback()
         raise HTTPException(
@@ -89,10 +89,10 @@ async def list_bookmarks(
     ),
     sort_order: Literal["asc", "desc"] = Query("desc", description="Sort order"),
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user_id),
+    tenant_id: str = Depends(get_current_tenant_id),
 ) -> BookmarkListResponse:
     """
-    Retrieve a paginated list of bookmarks for the authenticated user.
+    Retrieve a paginated list of bookmarks for the authenticated tenant.
 
     Query parameters:
     - **page**: Page number (default: 1)
@@ -100,40 +100,36 @@ async def list_bookmarks(
     - **sort_by**: Field to sort by (created_time, changed_time, title)
     - **sort_order**: Sort order (asc, desc)
 
-    Requires X-User-ID header for authentication.
+    Requires X-Tenant-ID header for authentication.
     """
-    # Get total count for user
-    count_query = (
-        select(func.count()).select_from(Bookmark).where(Bookmark.user_id == user_id)
-    )
-    total_result = await db.execute(count_query)
-    total = total_result.scalar()
-
     # Calculate pagination
     offset = (page - 1) * page_size
-    total_pages = (total + page_size - 1) // page_size
 
-    # Build query with sorting and user filter
+    # Build query with sorting and tenant filter
     sort_column = getattr(Bookmark, sort_by)
     order_func = desc if sort_order == "desc" else asc
 
+    # Fetch one extra item to determine if there's a next page
     query = (
         select(Bookmark)
-        .where(Bookmark.user_id == user_id)
+        .where(Bookmark.tenant_id == tenant_id)
         .order_by(order_func(sort_column))
         .offset(offset)
-        .limit(page_size)
+        .limit(page_size + 1)
     )
 
     result = await db.execute(query)
-    bookmarks = result.scalars().all()
+    all_items = result.scalars().all()
+
+    # Determine if there's a next page
+    has_next = len(all_items) > page_size
+    items = all_items[:page_size]  # Return only requested amount
 
     return BookmarkListResponse(
-        items=bookmarks,
-        total=total,
+        items=[BookmarkResponse.model_validate(item) for item in items],
         page=page,
         page_size=page_size,
-        total_pages=total_pages,
+        has_next=has_next,
     )
 
 
@@ -145,16 +141,16 @@ async def list_bookmarks(
 async def get_bookmark(
     bookmark_id: UUID,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user_id),
+    tenant_id: str = Depends(get_current_tenant_id),
 ) -> BookmarkResponse:
     """
     Retrieve a specific bookmark by its UUID.
 
-    Raises 404 if the bookmark doesn't exist or doesn't belong to the user.
-    Requires X-User-ID header for authentication.
+    Raises 404 if the bookmark doesn't exist or doesn't belong to the tenant.
+    Requires X-Tenant-ID header for authentication.
     """
     query = select(Bookmark).where(
-        Bookmark.id == bookmark_id, Bookmark.user_id == user_id
+        Bookmark.id == bookmark_id, Bookmark.tenant_id == tenant_id
     )
     result = await db.execute(query)
     bookmark = result.scalar_one_or_none()
@@ -165,7 +161,7 @@ async def get_bookmark(
             detail=f"Bookmark with id '{bookmark_id}' not found",
         )
 
-    return bookmark
+    return BookmarkResponse.model_validate(bookmark)
 
 
 @router.put(
@@ -175,23 +171,23 @@ async def update_bookmark(
     bookmark_id: UUID,
     bookmark_update: BookmarkUpdate,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user_id),
+    tenant_id: str = Depends(get_current_tenant_id),
     kafka_producer: Optional[KafkaEventProducer] = Depends(get_kafka_producer),
 ) -> BookmarkResponse:
     """
     Update an existing bookmark. Supports partial updates.
 
     All fields are optional:
-    - **url**: New URL (must be unique per user if changed)
+    - **url**: New URL (must be unique per tenant if changed)
     - **title**: New title
     - **description**: New description
 
     The `changed_time` field is automatically updated.
-    Requires X-User-ID header for authentication.
+    Requires X-Tenant-ID header for authentication.
     """
-    # Get existing bookmark for user
+    # Get existing bookmark for tenant
     query = select(Bookmark).where(
-        Bookmark.id == bookmark_id, Bookmark.user_id == user_id
+        Bookmark.id == bookmark_id, Bookmark.tenant_id == tenant_id
     )
     result = await db.execute(query)
     bookmark = result.scalar_one_or_none()
@@ -228,7 +224,7 @@ async def update_bookmark(
                 ),
             )
 
-        return bookmark
+        return BookmarkResponse.model_validate(bookmark)
     except IntegrityError:
         await db.rollback()
         raise HTTPException(
@@ -245,17 +241,17 @@ async def update_bookmark(
 async def delete_bookmark(
     bookmark_id: UUID,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user_id),
+    tenant_id: str = Depends(get_current_tenant_id),
     kafka_producer: Optional[KafkaEventProducer] = Depends(get_kafka_producer),
 ) -> None:
     """
     Delete a bookmark by its UUID.
 
-    Raises 404 if the bookmark doesn't exist or doesn't belong to the user.
-    Requires X-User-ID header for authentication.
+    Raises 404 if the bookmark doesn't exist or doesn't belong to the tenant.
+    Requires X-Tenant-ID header for authentication.
     """
     query = select(Bookmark).where(
-        Bookmark.id == bookmark_id, Bookmark.user_id == user_id
+        Bookmark.id == bookmark_id, Bookmark.tenant_id == tenant_id
     )
     result = await db.execute(query)
     bookmark = result.scalar_one_or_none()
@@ -269,7 +265,7 @@ async def delete_bookmark(
     # Capture minimal data before deletion for event
     bookmark_data = {
         "id": str(bookmark.id),
-        "user_id": bookmark.user_id,
+        "tenant_id": bookmark.tenant_id,
         "url": str(bookmark.url),
     }
 

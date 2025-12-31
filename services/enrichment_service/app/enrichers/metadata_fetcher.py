@@ -13,6 +13,9 @@ settings = get_settings()
 class MetadataFetcher:
     """Fetch and extract metadata from URLs."""
 
+    # Maximum response size: 5MB to prevent memory exhaustion
+    MAX_RESPONSE_SIZE = 5 * 1024 * 1024  # 5MB in bytes
+
     def __init__(self):
         self.timeout = httpx.Timeout(settings.enrichment_timeout_seconds)
         self.headers = {
@@ -26,20 +29,41 @@ class MetadataFetcher:
 
         Returns EnrichmentResult with extracted fields.
         Raises httpx exceptions on network errors.
+        Raises ValueError if response is too large or non-HTML.
         """
         async with httpx.AsyncClient(
             timeout=self.timeout, follow_redirects=True
         ) as client:
-            response = await client.get(url, headers=self.headers)
-            response.raise_for_status()
+            # Stream response to check size before downloading entire content
+            async with client.stream("GET", url, headers=self.headers) as response:
+                response.raise_for_status()
 
-            # Only process HTML responses
-            content_type = response.headers.get("content-type", "")
-            if "html" not in content_type.lower():
-                raise ValueError(f"Non-HTML content type: {content_type}")
+                # Only process HTML responses
+                content_type = response.headers.get("content-type", "")
+                if "html" not in content_type.lower():
+                    raise ValueError(f"Non-HTML content type: {content_type}")
 
-            html = response.text
-            soup = BeautifulSoup(html, "lxml")
+                # Check Content-Length header if present
+                content_length = response.headers.get("content-length")
+                if content_length and int(content_length) > self.MAX_RESPONSE_SIZE:
+                    raise ValueError(
+                        f"Response too large: {content_length} bytes (max {self.MAX_RESPONSE_SIZE})"
+                    )
+
+                # Read response with size limit
+                chunks = []
+                total_size = 0
+                async for chunk in response.aiter_bytes():
+                    total_size += len(chunk)
+                    if total_size > self.MAX_RESPONSE_SIZE:
+                        raise ValueError(
+                            f"Response exceeds size limit: {self.MAX_RESPONSE_SIZE} bytes"
+                        )
+                    chunks.append(chunk)
+
+                # Decode content
+                html = b"".join(chunks).decode(response.encoding or "utf-8", errors="replace")
+                soup = BeautifulSoup(html, "lxml")
 
             # Extract Open Graph tags
             og_title = self._get_meta_tag(soup, "og:title")

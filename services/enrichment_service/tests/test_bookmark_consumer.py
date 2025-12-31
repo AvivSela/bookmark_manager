@@ -35,7 +35,7 @@ class TestBookmarkEnrichmentConsumer:
         consumer.retry_handler.update_with_retry.assert_called_once()
         update_args = consumer.retry_handler.update_with_retry.call_args
         assert isinstance(update_args[0][1], UUID)
-        assert update_args[0][2] == sample_bookmark_event.data["user_id"]
+        assert update_args[0][2] == sample_bookmark_event.data["tenant_id"]
         assert update_args[0][3] == mock_enrichment_result
 
     async def test_enrich_bookmark_missing_url_logs_error(
@@ -66,7 +66,7 @@ class TestBookmarkEnrichmentConsumer:
             timestamp=datetime.now(timezone.utc),
             data={
                 "url": "https://example.com",
-                "user_id": "test-user-123",
+                "tenant_id": "test-user-123",
                 # Missing 'id' field
             },
             metadata={"service": "bookmark-service", "version": "1.0.0"},
@@ -83,8 +83,8 @@ class TestBookmarkEnrichmentConsumer:
         consumer.retry_handler.fetch_with_retry.assert_not_called()
         consumer.retry_handler.update_with_retry.assert_not_called()
 
-    async def test_enrich_bookmark_missing_user_id_logs_error(self):
-        """Test that missing user_id field is handled gracefully."""
+    async def test_enrich_bookmark_missing_tenant_id_logs_error(self):
+        """Test that missing tenant_id field is handled gracefully."""
         from datetime import datetime, timezone
         from uuid import uuid4
         from app.schemas.kafka_events import BookmarkEvent
@@ -96,7 +96,7 @@ class TestBookmarkEnrichmentConsumer:
             data={
                 "id": str(uuid4()),
                 "url": "https://example.com",
-                # Missing 'user_id' field
+                # Missing 'tenant_id' field
             },
             metadata={"service": "bookmark-service", "version": "1.0.0"},
         )
@@ -108,7 +108,7 @@ class TestBookmarkEnrichmentConsumer:
         # Should not raise exception
         await consumer._enrich_bookmark(event)
 
-        # Should not call fetch or update when user_id is missing
+        # Should not call fetch or update when tenant_id is missing
         consumer.retry_handler.fetch_with_retry.assert_not_called()
         consumer.retry_handler.update_with_retry.assert_not_called()
 
@@ -195,7 +195,7 @@ class TestBookmarkEnrichmentConsumer:
         args = consumer.retry_handler.update_with_retry.call_args[0]
         assert args[0] == consumer.bookmark_client
         assert isinstance(args[1], UUID)
-        assert args[2] == sample_bookmark_event.data["user_id"]
+        assert args[2] == sample_bookmark_event.data["tenant_id"]
         assert args[3] == mock_enrichment_result
 
     async def test_enrich_bookmark_converts_string_to_uuid(self, sample_bookmark_event):

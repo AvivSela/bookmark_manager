@@ -128,11 +128,11 @@ class TestEnrichmentRetryHandler:
         mock_client.update_bookmark_enrichment.return_value = True
 
         bookmark_id = uuid4()
-        user_id = "test-user-123"
+        tenant_id = "test-user-123"
         enrichment_result = EnrichmentResult(og_title="Test")
 
         result = await handler.update_with_retry(
-            mock_client, bookmark_id, user_id, enrichment_result
+            mock_client, bookmark_id, tenant_id, enrichment_result
         )
 
         assert result is True
@@ -153,11 +153,11 @@ class TestEnrichmentRetryHandler:
         mock_client.update_bookmark_enrichment.side_effect = [error_500, True]
 
         bookmark_id = uuid4()
-        user_id = "test-user-123"
+        tenant_id = "test-user-123"
         enrichment_result = EnrichmentResult(og_title="Test")
 
         result = await handler.update_with_retry(
-            mock_client, bookmark_id, user_id, enrichment_result
+            mock_client, bookmark_id, tenant_id, enrichment_result
         )
 
         assert result is True
@@ -178,12 +178,12 @@ class TestEnrichmentRetryHandler:
         mock_client.update_bookmark_enrichment.side_effect = error_400
 
         bookmark_id = uuid4()
-        user_id = "test-user-123"
+        tenant_id = "test-user-123"
         enrichment_result = EnrichmentResult(og_title="Test")
 
         with pytest.raises(httpx.HTTPStatusError) as exc_info:
             await handler.update_with_retry(
-                mock_client, bookmark_id, user_id, enrichment_result
+                mock_client, bookmark_id, tenant_id, enrichment_result
             )
 
         assert exc_info.value.response.status_code == 400

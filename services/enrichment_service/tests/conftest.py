@@ -102,7 +102,7 @@ def sample_bookmark_event():
         data={
             "id": str(uuid4()),
             "url": "https://example.com",
-            "user_id": "test-user-123",
+            "tenant_id": "test-tenant-123",
             "title": "Example Bookmark",
             "created_at": datetime.now(timezone.utc).isoformat(),
         },
@@ -119,7 +119,7 @@ def sample_bookmark_event_missing_url():
         timestamp=datetime.now(timezone.utc),
         data={
             "id": str(uuid4()),
-            "user_id": "test-user-123",
+            "tenant_id": "test-tenant-123",
             # Missing 'url' field
         },
         metadata={"service": "bookmark-service", "version": "1.0.0"},

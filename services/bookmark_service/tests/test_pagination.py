@@ -8,22 +8,22 @@ class TestBookmarkPagination:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "total_items,page_size,expected_pages",
+        "total_items,page_size",
         [
-            (0, 10, 0),  # No items
-            (1, 10, 1),  # Single item
-            (10, 10, 1),  # Exact multiple
-            (11, 10, 2),  # With remainder
-            (99, 10, 10),  # Multiple pages
-            (100, 10, 10),  # Exact multiple, larger dataset
-            (5, 3, 2),  # Small page size
+            (0, 10),  # No items
+            (1, 10),  # Single item
+            (10, 10),  # Exact multiple
+            (11, 10),  # With remainder
+            (99, 10),  # Multiple pages
+            (100, 10),  # Exact multiple, larger dataset
+            (5, 3),  # Small page size
         ],
     )
-    async def test_list_bookmarks_pagination_calculates_total_pages_correctly(
-        self, client: AsyncClient, total_items: int, page_size: int, expected_pages: int
+    async def test_list_bookmarks_pagination_respects_page_size(
+        self, client: AsyncClient, total_items: int, page_size: int
     ):
         """
-        Test 10: Total pages calculation for various combinations of items and page sizes.
+        Test 10: Pagination returns correct number of items per page.
 
         Incorrect pagination math breaks client-side UI - edge cases are common sources
         of off-by-one errors.
@@ -43,12 +43,16 @@ class TestBookmarkPagination:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["total"] == total_items
-        assert data["total_pages"] == expected_pages
         assert data["page_size"] == page_size
 
         # Verify items returned don't exceed page_size
         assert len(data["items"]) <= page_size
+
+        # Verify has_next is correct
+        if total_items > page_size:
+            assert data["has_next"] is True
+        else:
+            assert data["has_next"] is False
 
     @pytest.mark.asyncio
     async def test_list_bookmarks_respects_page_size_limit(self, client: AsyncClient):
@@ -206,8 +210,7 @@ class TestBookmarkPagination:
         data_page1 = response_page1.json()
         assert data_page1["page"] == 1
         assert len(data_page1["items"]) == 10
-        assert data_page1["total"] == 25
-        assert data_page1["total_pages"] == 3
+        assert data_page1["has_next"] is True
 
         # Request page 2 with page_size=10
         response_page2 = await client.get("/bookmarks?page=2&page_size=10")
@@ -215,6 +218,7 @@ class TestBookmarkPagination:
         data_page2 = response_page2.json()
         assert data_page2["page"] == 2
         assert len(data_page2["items"]) == 10
+        assert data_page2["has_next"] is True
 
         # Request page 3 with page_size=10 (last page, partial)
         response_page3 = await client.get("/bookmarks?page=3&page_size=10")
@@ -222,6 +226,7 @@ class TestBookmarkPagination:
         data_page3 = response_page3.json()
         assert data_page3["page"] == 3
         assert len(data_page3["items"]) == 5  # Only 5 items on last page
+        assert data_page3["has_next"] is False
 
         # Verify items on different pages are different
         page1_ids = {item["id"] for item in data_page1["items"]}
@@ -238,7 +243,69 @@ class TestBookmarkPagination:
 
         data = response.json()
         assert data["items"] == []
-        assert data["total"] == 0
-        assert data["total_pages"] == 0
+        assert data["has_next"] is False
         assert data["page"] == 1
         assert data["page_size"] == 10
+
+    @pytest.mark.asyncio
+    async def test_list_bookmarks_has_next_indicator(self, client: AsyncClient):
+        """
+        Test: Verify has_next indicator correctly identifies if there are more pages.
+
+        Tests the optimized pagination that uses a single query instead of COUNT.
+        """
+        # Scenario 1: First page with more pages available (15 items, page_size=10)
+        for i in range(15):
+            bookmark_data = {
+                "url": f"https://example{i}.com",
+                "title": f"Bookmark {i:02d}",
+            }
+            response = await client.post("/bookmarks", json=bookmark_data)
+            assert response.status_code == 201
+
+        # Request page 1 - should have next page
+        response_page1 = await client.get("/bookmarks?page=1&page_size=10")
+        assert response_page1.status_code == 200
+        data_page1 = response_page1.json()
+        assert len(data_page1["items"]) == 10
+        assert data_page1["has_next"] is True
+        assert data_page1["page"] == 1
+        assert data_page1["page_size"] == 10
+
+        # Scenario 2: Last page (page 2) - should NOT have next page
+        response_page2 = await client.get("/bookmarks?page=2&page_size=10")
+        assert response_page2.status_code == 200
+        data_page2 = response_page2.json()
+        assert len(data_page2["items"]) == 5  # Only 5 items remaining
+        assert data_page2["has_next"] is False
+        assert data_page2["page"] == 2
+
+        # Clean up for next scenario
+        for item in data_page1["items"] + data_page2["items"]:
+            await client.delete(f"/bookmarks/{item['id']}")
+
+        # Scenario 3: Single page (5 items, page_size=10) - should NOT have next page
+        for i in range(5):
+            bookmark_data = {
+                "url": f"https://single{i}.com",
+                "title": f"Single {i}",
+            }
+            response = await client.post("/bookmarks", json=bookmark_data)
+            assert response.status_code == 201
+
+        response_single = await client.get("/bookmarks?page=1&page_size=10")
+        assert response_single.status_code == 200
+        data_single = response_single.json()
+        assert len(data_single["items"]) == 5
+        assert data_single["has_next"] is False
+
+        # Clean up
+        for item in data_single["items"]:
+            await client.delete(f"/bookmarks/{item['id']}")
+
+        # Scenario 4: Empty list - should NOT have next page
+        response_empty = await client.get("/bookmarks?page=1&page_size=10")
+        assert response_empty.status_code == 200
+        data_empty = response_empty.json()
+        assert len(data_empty["items"]) == 0
+        assert data_empty["has_next"] is False

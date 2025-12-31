@@ -34,7 +34,8 @@
       "Bash(.venv/bin/pytest tests/ -v --tb=short)",
       "Bash(pip3 install:*)",
       "Bash(sudo docker cp:*)",
-      "Bash(docker-compose down:*)"
+      "Bash(docker-compose down:*)",
+      "Bash(.venv/bin/pytest tests/test_exception_handlers.py -v)"
     ]
   }
 }

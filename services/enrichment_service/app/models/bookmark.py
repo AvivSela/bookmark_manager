@@ -59,8 +59,8 @@ class Bookmark(Base):
     # Primary key as UUID
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
 
-    # User ID for multi-tenancy
-    user_id = Column(String(255), nullable=False, index=True)
+    # Tenant ID for multi-tenancy
+    tenant_id = Column(String(255), nullable=False, index=True)
 
     # URL field - indexed but not globally unique (unique per user)
     url = Column(String(2048), nullable=False, index=True)
@@ -96,8 +96,8 @@ class Bookmark(Base):
     # Indexes and constraints for multi-tenancy
     __table_args__ = (
         Index("idx_bookmark_created_time", "created_time"),
-        Index("idx_user_bookmarks", "user_id", "created_time"),
-        UniqueConstraint("user_id", "url", name="uq_user_url"),
+        Index("idx_tenant_bookmarks", "tenant_id", "created_time"),
+        UniqueConstraint("tenant_id", "url", name="uq_tenant_url"),
     )
 
     def __repr__(self):
