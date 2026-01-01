@@ -35,7 +35,10 @@
       "Bash(pip3 install:*)",
       "Bash(sudo docker cp:*)",
       "Bash(docker-compose down:*)",
-      "Bash(.venv/bin/pytest tests/test_exception_handlers.py -v)"
+      "Bash(.venv/bin/pytest tests/test_exception_handlers.py -v)",
+      "Bash(.venv/bin/pytest tests/ -v)",
+      "Bash(.venv/bin/pytest tests/test_bookmark_consumer.py -v)",
+      "Bash(.venv/bin/pytest tests/ -v --tb=short -k \"consumer or retry\")"
     ]
   }
 }

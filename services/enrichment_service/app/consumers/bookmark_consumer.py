@@ -10,6 +10,11 @@ from app.schemas.kafka_events import BookmarkEvent
 from app.enrichers.metadata_fetcher import MetadataFetcher
 from app.enrichers.retry_handler import EnrichmentRetryHandler
 from app.enrichers.bookmark_service_client import BookmarkServiceClient
+from app.enrichers.resource_type_detector import (
+    ResourceTypeDetector,
+    ResourceDetectorConfig,
+)
+from app.enrichers.enrichment_orchestrator import EnrichmentOrchestrator
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -30,7 +35,32 @@ class BookmarkEnrichmentConsumer:
 
     def __init__(self):
         self.consumer = None
+
+        # Always create fetcher for backward compatibility (tests may use it)
         self.fetcher = MetadataFetcher()
+
+        # Initialize enrichment v2 if enabled
+        if settings.enrichment_v2_enabled:
+            # Create resource type detector
+            detector_config = ResourceDetectorConfig(
+                enable_head_requests=settings.enable_resource_type_head_requests,
+                head_request_timeout=settings.resource_type_head_timeout,
+            )
+            detector = ResourceTypeDetector(detector_config)
+
+            # Create enrichment orchestrator
+            orchestrator_config = {
+                "enabled_enrichers": settings.enabled_enrichers_list,
+                "enrichment_timeout_seconds": settings.enrichment_timeout_seconds,
+                "max_parallel_enrichers": settings.max_parallel_enrichers,
+            }
+            self.orchestrator = EnrichmentOrchestrator(detector, orchestrator_config)
+            logger.info("Initialized enrichment v2 with orchestrator")
+        else:
+            # Fallback to v1 (legacy)
+            self.orchestrator = None
+            logger.info("Using enrichment v1 (legacy mode)")
+
         self.retry_handler = EnrichmentRetryHandler()
         self.bookmark_client = BookmarkServiceClient()
         self.status = ConsumerStatus.NOT_STARTED
@@ -109,10 +139,17 @@ class BookmarkEnrichmentConsumer:
                 )
                 return
 
-            # Fetch metadata with retry
-            enrichment_result = await self.retry_handler.fetch_with_retry(
-                self.fetcher, url
-            )
+            # Enrich using v2 orchestrator or v1 fetcher
+            if settings.enrichment_v2_enabled:
+                # Use enrichment v2 with orchestrator
+                enrichment_result = await self.retry_handler.enrich_with_retry(
+                    self.orchestrator, url, bookmark_id, tenant_id
+                )
+            else:
+                # Fallback to v1 (legacy)
+                enrichment_result = await self.retry_handler.fetch_with_retry(
+                    self.fetcher, url
+                )
 
             # Update bookmark via API with retry
             await self.retry_handler.update_with_retry(

@@ -8,6 +8,7 @@ import httpx
 import logging
 from uuid import UUID
 from app.config import get_settings
+from app.enrichers.enrichment_orchestrator import EnrichmentOrchestrator
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -52,6 +53,48 @@ class EnrichmentRetryHandler:
         """
         try:
             return await fetcher.fetch_metadata(url)
+        except httpx.HTTPStatusError as e:
+            # Don't retry 4xx errors (client errors)
+            if 400 <= e.response.status_code < 500:
+                logger.warning(
+                    f"Non-retryable HTTP error {e.response.status_code} for {url}"
+                )
+                raise
+            # Retry 5xx errors
+            logger.warning(f"Retrying after HTTP {e.response.status_code} for {url}")
+            raise
+
+    @retry(
+        retry=retry_if_exception_type(RETRYABLE_EXCEPTIONS),
+        stop=stop_after_attempt(settings.enrichment_max_attempts),
+        wait=wait_random_exponential(
+            multiplier=settings.enrichment_backoff_multiplier,
+            min=settings.enrichment_initial_retry_delay,
+            max=settings.enrichment_max_retry_delay,
+        ),
+        reraise=True,
+    )
+    async def enrich_with_retry(
+        self, orchestrator: EnrichmentOrchestrator, url: str, bookmark_id: str, tenant_id: str
+    ):
+        """
+        Enrich bookmark with retry logic using orchestrator.
+
+        Args:
+            orchestrator: EnrichmentOrchestrator instance
+            url: Bookmark URL
+            bookmark_id: Bookmark ID
+            tenant_id: Tenant ID
+
+        Returns:
+            EnrichmentResult
+
+        Raises:
+            - Original exception after max retries exhausted
+            - Immediately on 4xx errors (client errors, no retry)
+        """
+        try:
+            return await orchestrator.enrich_bookmark(url, bookmark_id, tenant_id)
         except httpx.HTTPStatusError as e:
             # Don't retry 4xx errors (client errors)
             if 400 <= e.response.status_code < 500:

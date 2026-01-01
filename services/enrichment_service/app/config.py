@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
+from typing import Optional, List
 
 
 class Settings(BaseSettings):
@@ -13,13 +14,6 @@ class Settings(BaseSettings):
     # Server configuration
     host: str = "0.0.0.0"
     port: int = 8001
-
-    # Database configuration
-    postgres_user: str
-    postgres_password: str
-    postgres_db: str
-    postgres_host: str = "postgres"
-    postgres_port: int = 5432
 
     # Kafka configuration
     kafka_bootstrap_servers: str = "bookmark-kafka:9092"
@@ -42,22 +36,41 @@ class Settings(BaseSettings):
     bookmark_service_port: int = 8000
     bookmark_service_timeout_seconds: int = 10
 
+    # ===== Enrichment v2 Configuration =====
+
+    # Enabled enrichers (comma-separated list)
+    enabled_enrichers: str = "webpage"  # Start with just webpage for Phase 1
+    max_parallel_enrichers: int = 5
+
+    # Resource type detection settings
+    enable_resource_type_head_requests: bool = (
+        False  # Disable HEAD by default (performance)
+    )
+    resource_type_head_timeout: float = 5.0
+
+    # Screenshot service configuration (for Phase 2)
+    screenshot_api_provider: str = "screenshotapi"
+    screenshot_api_key: Optional[str] = None
+    screenshot_api_endpoint: str = "https://api.screenshotapi.net/screenshot"
+    screenshot_enabled: bool = False  # Disabled until Phase 2
+    screenshot_timeout: float = 30.0
+
+    # Feature flags
+    enrichment_v2_enabled: bool = True  # Master switch for v2 features
+
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False
     )
 
     @property
-    def database_url(self) -> str:
-        """Construct async PostgreSQL connection URL."""
-        return (
-            f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
-            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
-        )
-
-    @property
     def bookmark_service_url(self) -> str:
         """Construct bookmark service base URL."""
         return f"http://{self.bookmark_service_host}:{self.bookmark_service_port}"
+
+    @property
+    def enabled_enrichers_list(self) -> List[str]:
+        """Parse enabled_enrichers string into list."""
+        return [e.strip() for e in self.enabled_enrichers.split(",") if e.strip()]
 
 
 @lru_cache
