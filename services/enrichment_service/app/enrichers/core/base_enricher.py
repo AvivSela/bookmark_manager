@@ -7,7 +7,7 @@ import logging
 import asyncio
 import time
 
-from app.enrichers.resource_types import ResourceType
+from app.enrichers.core.resource_types import ResourceType
 
 
 @dataclass

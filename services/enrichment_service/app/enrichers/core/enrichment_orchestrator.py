@@ -4,12 +4,12 @@ import asyncio
 import logging
 from typing import List, Dict, Any
 
-from app.enrichers.base_enricher import EnricherContext, EnricherResult
-from app.enrichers.resource_type_detector import ResourceTypeDetector
-from app.enrichers.enricher_registry import registry
-from app.enrichers.webpage_enricher import WebPageEnricher
+from app.enrichers.core.base_enricher import EnricherContext, EnricherResult
+from app.enrichers.core.resource_type_detector import ResourceTypeDetector
+from app.enrichers.core.enricher_registry import registry
+from app.enrichers.implementations.webpage_enricher import WebPageEnricher
 from app.schemas.enrichment import EnrichmentResult
-from app.enrichers.resource_types import ResourceType
+from app.enrichers.core.resource_types import ResourceType
 
 
 logger = logging.getLogger(__name__)
@@ -32,6 +32,21 @@ class EnrichmentOrchestrator:
         # Register WebPageEnricher
         if "webpage" not in registry.list_enrichers():
             registry.register(WebPageEnricher)
+
+        # Register ImageEnricher
+        if "image" not in registry.list_enrichers():
+            from app.enrichers.implementations.image_enricher import ImageEnricher
+            registry.register(ImageEnricher)
+
+        # Register DatasetEnricher
+        if "dataset" not in registry.list_enrichers():
+            from app.enrichers.implementations.dataset_enricher import DatasetEnricher
+            registry.register(DatasetEnricher)
+
+        # Register ApiEnricher
+        if "api" not in registry.list_enrichers():
+            from app.enrichers.implementations.api_enricher import ApiEnricher
+            registry.register(ApiEnricher)
 
     def _select_enrichers(
         self,

@@ -40,7 +40,15 @@
       "Bash(.venv/bin/pytest tests/test_bookmark_consumer.py -v)",
       "Bash(.venv/bin/pytest tests/ -v --tb=short -k \"consumer or retry\")",
       "Bash(POSTGRES_USER=bookmark_user POSTGRES_PASSWORD=bookmark_pass POSTGRES_DB=bookmark_db .venv/bin/python:*)",
-      "Bash(POSTGRES_HOST=localhost POSTGRES_PORT=5432 POSTGRES_USER=bookmark_user POSTGRES_PASSWORD=bookmark_pass POSTGRES_DB=bookmark_db .venv/bin/python:*)"
+      "Bash(POSTGRES_HOST=localhost POSTGRES_PORT=5432 POSTGRES_USER=bookmark_user POSTGRES_PASSWORD=bookmark_pass POSTGRES_DB=bookmark_db .venv/bin/python:*)",
+      "Bash(.venv/bin/pytest tests/test_image_enricher.py -v)",
+      "Bash(.venv/bin/pytest tests/test_dataset_enricher.py -v)",
+      "Bash(.venv/bin/pytest tests/test_api_enricher.py -v)",
+      "Bash(.venv/bin/pytest:*)",
+      "Bash(git mv:*)",
+      "Bash(grep:*)",
+      "Bash(.venv/bin/python:*)",
+      "Bash(.venv/bin/pytest tests/test_retry_handler.py tests/test_bookmark_service_client.py -v)"
     ]
   }
 }

@@ -8,7 +8,7 @@ import httpx
 import logging
 from uuid import UUID
 from app.config import get_settings
-from app.enrichers.enrichment_orchestrator import EnrichmentOrchestrator
+from app.enrichers.core.enrichment_orchestrator import EnrichmentOrchestrator
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

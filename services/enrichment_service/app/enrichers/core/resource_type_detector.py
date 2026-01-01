@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from urllib.parse import urlparse
 from pathlib import Path
 
-from app.enrichers.resource_types import ResourceType, ResourceTypeInfo
+from app.enrichers.core.resource_types import ResourceType, ResourceTypeInfo
 
 
 logger = logging.getLogger(__name__)

@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     # ===== Enrichment Configuration =====
 
     # Enabled enrichers (comma-separated list)
-    enabled_enrichers: str = "webpage"  # Start with just webpage for Phase 1
+    enabled_enrichers: str = "webpage,image,dataset,api"
     max_parallel_enrichers: int = 5
 
     # Resource type detection settings
@@ -47,6 +47,20 @@ class Settings(BaseSettings):
         False  # Disable HEAD by default (performance)
     )
     resource_type_head_timeout: float = 5.0
+
+    # Image enricher settings
+    image_max_header_size: int = 32 * 1024  # 32KB
+    image_timeout_seconds: float = 10.0
+
+    # Dataset enricher settings
+    dataset_enable_platform_scraping: bool = True
+    dataset_timeout_seconds: float = 15.0
+    dataset_max_page_size: int = 5 * 1024 * 1024  # 5MB
+
+    # API enricher settings
+    api_spec_paths: str = "/openapi.json,/swagger.json,/api-docs"
+    api_enable_html_fallback: bool = True
+    api_timeout_seconds: float = 10.0
 
     # Screenshot service configuration (for Phase 2)
     screenshot_api_provider: str = "screenshotapi"

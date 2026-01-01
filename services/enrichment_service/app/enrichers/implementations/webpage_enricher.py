@@ -7,8 +7,8 @@ from typing import Optional, Dict, Any
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 
-from app.enrichers.base_enricher import BaseEnricher, EnricherContext, EnricherResult
-from app.enrichers.resource_types import ResourceType
+from app.enrichers.core.base_enricher import BaseEnricher, EnricherContext, EnricherResult
+from app.enrichers.core.resource_types import ResourceType
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)

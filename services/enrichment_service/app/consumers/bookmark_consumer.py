@@ -7,13 +7,13 @@ from enum import Enum
 from datetime import datetime, timezone
 from app.config import get_settings
 from app.schemas.kafka_events import BookmarkEvent
-from app.enrichers.retry_handler import EnrichmentRetryHandler
-from app.enrichers.bookmark_service_client import BookmarkServiceClient
-from app.enrichers.resource_type_detector import (
+from app.enrichers.core.retry_handler import EnrichmentRetryHandler
+from app.enrichers.clients.bookmark_service_client import BookmarkServiceClient
+from app.enrichers.core.resource_type_detector import (
     ResourceTypeDetector,
     ResourceDetectorConfig,
 )
-from app.enrichers.enrichment_orchestrator import EnrichmentOrchestrator
+from app.enrichers.core.enrichment_orchestrator import EnrichmentOrchestrator
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

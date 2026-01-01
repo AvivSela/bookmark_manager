@@ -3,8 +3,8 @@
 import logging
 from typing import Dict, Type, List
 
-from app.enrichers.base_enricher import BaseEnricher
-from app.enrichers.resource_types import ResourceType
+from app.enrichers.core.base_enricher import BaseEnricher
+from app.enrichers.core.resource_types import ResourceType
 
 
 logger = logging.getLogger(__name__)
