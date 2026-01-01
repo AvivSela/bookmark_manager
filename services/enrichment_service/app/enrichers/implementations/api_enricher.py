@@ -101,7 +101,6 @@ class ApiEnricher(BaseEnricher):
         base_url = f"{parsed.scheme}://{parsed.netloc}"
 
         timeout = httpx.Timeout(5.0)  # Short timeout for spec detection
-        headers = {"User-Agent": settings.user_agent}
 
         async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
             for path in self.spec_paths:

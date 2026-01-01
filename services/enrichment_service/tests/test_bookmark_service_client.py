@@ -3,7 +3,6 @@ import httpx
 import respx
 from uuid import uuid4
 from app.enrichers.clients.bookmark_service_client import BookmarkServiceClient
-from app.schemas.enrichment import EnrichmentResult
 
 
 @pytest.mark.asyncio

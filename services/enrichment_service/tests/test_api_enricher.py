@@ -2,7 +2,6 @@
 
 import pytest
 import httpx
-import json
 
 from app.enrichers.implementations.api_enricher import ApiEnricher
 from app.enrichers.core.base_enricher import EnricherContext

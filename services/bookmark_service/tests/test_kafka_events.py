@@ -1,7 +1,6 @@
 """Tests for Kafka event publishing."""
 
 import pytest
-from httpx import AsyncClient
 
 
 @pytest.mark.asyncio

@@ -3,7 +3,6 @@
 import json
 import logging
 import asyncio
-from uuid import UUID
 from aiokafka import AIOKafkaConsumer
 from app.config import get_settings
 from app.kafka.schemas import BookmarkCreatedEvent, ValidationCompletedEvent

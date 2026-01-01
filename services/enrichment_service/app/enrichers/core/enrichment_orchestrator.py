@@ -4,7 +4,7 @@ import asyncio
 import logging
 from typing import List, Dict, Any
 
-from app.enrichers.core.base_enricher import EnricherContext, EnricherResult
+from app.enrichers.core.base_enricher import BaseEnricher, EnricherContext, EnricherResult
 from app.enrichers.core.resource_type_detector import ResourceTypeDetector
 from app.enrichers.core.enricher_registry import registry
 from app.enrichers.implementations.webpage_enricher import WebPageEnricher
@@ -82,7 +82,7 @@ class EnrichmentOrchestrator:
 
     async def _execute_enrichers(
         self,
-        enrichers: List["BaseEnricher"],
+        enrichers: List[BaseEnricher],
         url: str,
         bookmark_id: str,
         tenant_id: str,

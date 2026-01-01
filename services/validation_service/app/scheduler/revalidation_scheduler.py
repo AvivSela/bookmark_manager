@@ -2,7 +2,6 @@
 
 import logging
 import asyncio
-from datetime import datetime, timedelta
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from app.config import get_settings

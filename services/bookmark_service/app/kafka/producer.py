@@ -3,7 +3,7 @@ import json
 from typing import Dict, Any, Optional
 from aiokafka import AIOKafkaProducer
 from aiokafka.errors import KafkaError, KafkaTimeoutError
-from app.kafka.schemas import BookmarkEvent, BookmarkEventType
+from app.kafka.schemas import BookmarkEvent
 
 logger = logging.getLogger(__name__)
 

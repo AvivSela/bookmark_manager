@@ -4,7 +4,6 @@ from pydantic import (
     Field,
     ConfigDict,
     field_validator,
-    ValidationError,
 )
 from datetime import datetime
 from uuid import UUID

@@ -1,7 +1,6 @@
 import pytest
 from datetime import datetime, timezone
 from uuid import uuid4
-from unittest.mock import patch
 from app.schemas.enrichment import EnrichmentResult
 from app.schemas.kafka_events import BookmarkEvent
 

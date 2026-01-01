@@ -3,10 +3,9 @@
 import logging
 import asyncio
 from uuid import UUID
-from fastapi import APIRouter, HTTPException, Depends, Header
-from typing import Optional, List
+from fastapi import APIRouter, HTTPException, Header
+from typing import Optional
 from app.schemas.validation import (
-    ValidationResult,
     ValidationResultResponse,
     BatchValidationResponse,
 )

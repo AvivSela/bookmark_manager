@@ -4,7 +4,6 @@ import pytest
 import httpx
 import io
 from PIL import Image
-from unittest.mock import AsyncMock
 
 from app.enrichers.implementations.image_enricher import ImageEnricher
 from app.enrichers.core.base_enricher import EnricherContext

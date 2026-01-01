@@ -110,7 +110,7 @@ class TestHTTPExceptionHandler:
         """
         from app.main import app
 
-        with patch("app.main.logger") as mock_logger:
+        with patch("app.validation_exception_handler.logger") as mock_logger:
             # Trigger a 4xx error (401)
             async with AsyncClient(
                 transport=ASGITransport(app=app), base_url="http://test"

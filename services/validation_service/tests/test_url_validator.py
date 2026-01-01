@@ -1,7 +1,6 @@
 import pytest
 import respx
 import httpx
-from uuid import uuid4
 
 
 @pytest.mark.asyncio

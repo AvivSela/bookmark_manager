@@ -2,7 +2,6 @@ import httpx
 import logging
 from uuid import UUID
 from datetime import datetime
-from typing import Optional
 from app.schemas.validation import ValidationResult
 from app.config import get_settings
 

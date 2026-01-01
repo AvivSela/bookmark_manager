@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import select, func, desc, asc
+from sqlalchemy import select, desc, asc
 from uuid import UUID
 from typing import Literal, Optional
 from datetime import datetime, timezone
