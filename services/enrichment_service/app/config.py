@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     bookmark_service_port: int = 8000
     bookmark_service_timeout_seconds: int = 10
 
-    # ===== Enrichment v2 Configuration =====
+    # ===== Enrichment Configuration =====
 
     # Enabled enrichers (comma-separated list)
     enabled_enrichers: str = "webpage"  # Start with just webpage for Phase 1
@@ -54,9 +54,6 @@ class Settings(BaseSettings):
     screenshot_api_endpoint: str = "https://api.screenshotapi.net/screenshot"
     screenshot_enabled: bool = False  # Disabled until Phase 2
     screenshot_timeout: float = 30.0
-
-    # Feature flags
-    enrichment_v2_enabled: bool = True  # Master switch for v2 features
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False

@@ -43,37 +43,6 @@ class EnrichmentRetryHandler:
         ),
         reraise=True,
     )
-    async def fetch_with_retry(self, fetcher, url: str):
-        """
-        Fetch metadata with retry logic.
-
-        Raises:
-            - Original exception after max retries exhausted
-            - Immediately on 4xx errors (client errors, no retry)
-        """
-        try:
-            return await fetcher.fetch_metadata(url)
-        except httpx.HTTPStatusError as e:
-            # Don't retry 4xx errors (client errors)
-            if 400 <= e.response.status_code < 500:
-                logger.warning(
-                    f"Non-retryable HTTP error {e.response.status_code} for {url}"
-                )
-                raise
-            # Retry 5xx errors
-            logger.warning(f"Retrying after HTTP {e.response.status_code} for {url}")
-            raise
-
-    @retry(
-        retry=retry_if_exception_type(RETRYABLE_EXCEPTIONS),
-        stop=stop_after_attempt(settings.enrichment_max_attempts),
-        wait=wait_random_exponential(
-            multiplier=settings.enrichment_backoff_multiplier,
-            min=settings.enrichment_initial_retry_delay,
-            max=settings.enrichment_max_retry_delay,
-        ),
-        reraise=True,
-    )
     async def enrich_with_retry(
         self, orchestrator: EnrichmentOrchestrator, url: str, bookmark_id: str, tenant_id: str
     ):

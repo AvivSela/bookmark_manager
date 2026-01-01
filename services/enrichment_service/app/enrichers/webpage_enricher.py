@@ -1,19 +1,28 @@
 """Webpage enricher - extracts HTML metadata from web pages."""
 
 import time
+import httpx
+import logging
 from typing import Optional, Dict, Any
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin, urlparse
 
 from app.enrichers.base_enricher import BaseEnricher, EnricherContext, EnricherResult
 from app.enrichers.resource_types import ResourceType
-from app.enrichers.metadata_fetcher import MetadataFetcher
+from app.config import get_settings
+
+logger = logging.getLogger(__name__)
+settings = get_settings()
 
 
 class WebPageEnricher(BaseEnricher):
     """Extract HTML metadata from web pages."""
 
+    # Maximum response size: 5MB to prevent memory exhaustion
+    MAX_RESPONSE_SIZE = 5 * 1024 * 1024  # 5MB in bytes
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__(config)
-        self.fetcher = MetadataFetcher()
 
     async def enrich(self, context: EnricherContext) -> EnricherResult:
         """
@@ -28,21 +37,81 @@ class WebPageEnricher(BaseEnricher):
         start_time = time.time()
 
         try:
-            # Use existing MetadataFetcher to extract metadata
-            result = await self.fetcher.fetch_metadata(context.url)
+            # Fetch and extract metadata
+            timeout = httpx.Timeout(settings.enrichment_timeout_seconds)
+            headers = {
+                "User-Agent": settings.user_agent,
+                "Accept": "text/html,application/xhtml+xml",
+            }
+
+            async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+                # Stream response to check size before downloading entire content
+                async with client.stream("GET", context.url, headers=headers) as response:
+                    response.raise_for_status()
+
+                    # Only process HTML responses
+                    content_type = response.headers.get("content-type", "")
+                    if "html" not in content_type.lower():
+                        raise ValueError(f"Non-HTML content type: {content_type}")
+
+                    # Check Content-Length header if present
+                    content_length = response.headers.get("content-length")
+                    if content_length and int(content_length) > self.MAX_RESPONSE_SIZE:
+                        raise ValueError(
+                            f"Response too large: {content_length} bytes (max {self.MAX_RESPONSE_SIZE})"
+                        )
+
+                    # Read response with size limit
+                    chunks = []
+                    total_size = 0
+                    async for chunk in response.aiter_bytes():
+                        total_size += len(chunk)
+                        if total_size > self.MAX_RESPONSE_SIZE:
+                            raise ValueError(
+                                f"Response exceeds size limit: {self.MAX_RESPONSE_SIZE} bytes"
+                            )
+                        chunks.append(chunk)
+
+                    # Decode content
+                    html = b"".join(chunks).decode(
+                        response.encoding or "utf-8", errors="replace"
+                    )
+                    soup = BeautifulSoup(html, "lxml")
+
+            # Extract Open Graph tags
+            og_title = self._get_meta_tag(soup, "og:title")
+            og_description = self._get_meta_tag(soup, "og:description")
+            og_image = self._get_meta_tag(soup, "og:image")
+            og_type = self._get_meta_tag(soup, "og:type")
+            og_site_name = self._get_meta_tag(soup, "og:site_name")
+
+            # Extract standard meta tags (fallback)
+            meta_description = self._get_meta_tag(
+                soup, "description", property_attr="name"
+            )
+
+            # Extract favicon
+            favicon_url = self._get_favicon(soup, context.url)
+
+            # Make og_image and favicon absolute URLs
+            if og_image:
+                og_image = urljoin(context.url, og_image)
+            if favicon_url:
+                favicon_url = urljoin(context.url, favicon_url)
+
             execution_time = (time.time() - start_time) * 1000
 
             return EnricherResult(
                 enricher=self,
                 success=True,
                 data={
-                    "og_title": result.og_title,
-                    "og_description": result.og_description,
-                    "og_image": result.og_image,
-                    "og_type": result.og_type,
-                    "og_site_name": result.og_site_name,
-                    "meta_description": result.meta_description,
-                    "favicon_url": result.favicon_url,
+                    "og_title": og_title,
+                    "og_description": og_description,
+                    "og_image": og_image,
+                    "og_type": og_type,
+                    "og_site_name": og_site_name,
+                    "meta_description": meta_description,
+                    "favicon_url": favicon_url,
                 },
                 execution_time_ms=execution_time,
             )
@@ -58,6 +127,26 @@ class WebPageEnricher(BaseEnricher):
                 error=str(e),
                 execution_time_ms=execution_time,
             )
+
+    def _get_meta_tag(
+        self, soup: BeautifulSoup, property_value: str, property_attr: str = "property"
+    ) -> Optional[str]:
+        """Extract meta tag content by property/name attribute."""
+        tag = soup.find("meta", {property_attr: property_value})
+        return tag.get("content") if tag else None
+
+    def _get_favicon(self, soup: BeautifulSoup, base_url: str) -> Optional[str]:
+        """Extract favicon URL with fallback logic."""
+        # Try <link rel="icon">
+        icon_link = soup.find(
+            "link", rel=lambda x: x and "icon" in x.lower() if x else False
+        )
+        if icon_link and icon_link.get("href"):
+            return icon_link["href"]
+
+        # Fallback: /favicon.ico
+        parsed = urlparse(base_url)
+        return f"{parsed.scheme}://{parsed.netloc}/favicon.ico"
 
     def is_applicable(self, resource_type: ResourceType) -> bool:
         """

@@ -125,15 +125,3 @@ def sample_bookmark_event_missing_url():
         },
         metadata={"service": "bookmark-service", "version": "1.0.0"},
     )
-
-
-@pytest.fixture(autouse=True)
-def disable_enrichment_v2():
-    """Disable enrichment v2 for backward compatibility with existing tests."""
-    with patch("app.consumers.bookmark_consumer.settings") as mock_settings:
-        from app.config import Settings
-
-        settings = Settings()
-        settings.enrichment_v2_enabled = False  # Disable v2 for existing tests
-        mock_settings.enrichment_v2_enabled = False
-        yield settings

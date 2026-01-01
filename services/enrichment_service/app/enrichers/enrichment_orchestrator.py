@@ -9,6 +9,7 @@ from app.enrichers.resource_type_detector import ResourceTypeDetector
 from app.enrichers.enricher_registry import registry
 from app.enrichers.webpage_enricher import WebPageEnricher
 from app.schemas.enrichment import EnrichmentResult
+from app.enrichers.resource_types import ResourceType
 
 
 logger = logging.getLogger(__name__)
@@ -34,15 +35,12 @@ class EnrichmentOrchestrator:
 
     def _select_enrichers(
         self,
-        resource_type: "ResourceType",
-        primary_type_value: str
-    ) -> List["BaseEnricher"]:
+        resource_type: "ResourceType") -> List["BaseEnricher"]:
         """
         Select applicable enrichers for the resource type with fallback logic.
 
         Args:
             resource_type: Detected resource type enum
-            primary_type_value: String value of the primary type (for logging)
 
         Returns:
             List of enrichers to run (guaranteed non-empty due to fallback)
@@ -54,7 +52,7 @@ class EnrichmentOrchestrator:
 
         if not enrichers:
             logger.warning(
-                f"No applicable enrichers for type {primary_type_value}, "
+                f"No applicable enrichers for type {resource_type.value}, "
                 f"using webpage enricher as fallback"
             )
             # Fallback to webpage enricher
@@ -123,10 +121,7 @@ class EnrichmentOrchestrator:
         resource_type_info = await self.detector.detect_resource_type(url)
 
         # Step 2: Select applicable enrichers (with fallback)
-        enrichers = self._select_enrichers(
-            resource_type_info.primary_type,
-            resource_type_info.primary_type.value
-        )
+        enrichers = self._select_enrichers(resource_type_info.primary_type)
 
         # Step 3: Run enrichers in parallel
         results = await self._execute_enrichers(

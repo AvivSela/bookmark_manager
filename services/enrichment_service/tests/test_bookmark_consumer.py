@@ -18,7 +18,7 @@ class TestBookmarkEnrichmentConsumer:
             og_title="Test Title", og_description="Test Description"
         )
 
-        consumer.retry_handler.fetch_with_retry = AsyncMock(
+        consumer.retry_handler.enrich_with_retry = AsyncMock(
             return_value=mock_enrichment_result
         )
         consumer.retry_handler.update_with_retry = AsyncMock(return_value=True)
@@ -26,10 +26,12 @@ class TestBookmarkEnrichmentConsumer:
         # Execute enrichment
         await consumer._enrich_bookmark(sample_bookmark_event)
 
-        # Verify fetch was called with correct URL
-        consumer.retry_handler.fetch_with_retry.assert_called_once()
-        call_args = consumer.retry_handler.fetch_with_retry.call_args
+        # Verify enrich was called with correct parameters
+        consumer.retry_handler.enrich_with_retry.assert_called_once()
+        call_args = consumer.retry_handler.enrich_with_retry.call_args
         assert call_args[0][1] == sample_bookmark_event.data["url"]
+        assert call_args[0][2] == sample_bookmark_event.data["id"]
+        assert call_args[0][3] == sample_bookmark_event.data["tenant_id"]
 
         # Verify update was called with correct parameters
         consumer.retry_handler.update_with_retry.assert_called_once()
@@ -44,14 +46,14 @@ class TestBookmarkEnrichmentConsumer:
         """Test that missing URL field is handled gracefully."""
         consumer = BookmarkEnrichmentConsumer()
 
-        consumer.retry_handler.fetch_with_retry = AsyncMock()
+        consumer.retry_handler.enrich_with_retry = AsyncMock()
         consumer.retry_handler.update_with_retry = AsyncMock()
 
         # Should not raise exception
         await consumer._enrich_bookmark(sample_bookmark_event_missing_url)
 
-        # Should not call fetch or update when URL is missing
-        consumer.retry_handler.fetch_with_retry.assert_not_called()
+        # Should not call enrich or update when URL is missing
+        consumer.retry_handler.enrich_with_retry.assert_not_called()
         consumer.retry_handler.update_with_retry.assert_not_called()
 
     async def test_enrich_bookmark_missing_bookmark_id_logs_error(self):
@@ -73,14 +75,14 @@ class TestBookmarkEnrichmentConsumer:
         )
 
         consumer = BookmarkEnrichmentConsumer()
-        consumer.retry_handler.fetch_with_retry = AsyncMock()
+        consumer.retry_handler.enrich_with_retry = AsyncMock()
         consumer.retry_handler.update_with_retry = AsyncMock()
 
         # Should not raise exception
         await consumer._enrich_bookmark(event)
 
-        # Should not call fetch or update when ID is missing
-        consumer.retry_handler.fetch_with_retry.assert_not_called()
+        # Should not call enrich or update when ID is missing
+        consumer.retry_handler.enrich_with_retry.assert_not_called()
         consumer.retry_handler.update_with_retry.assert_not_called()
 
     async def test_enrich_bookmark_missing_tenant_id_logs_error(self):
@@ -102,35 +104,35 @@ class TestBookmarkEnrichmentConsumer:
         )
 
         consumer = BookmarkEnrichmentConsumer()
-        consumer.retry_handler.fetch_with_retry = AsyncMock()
+        consumer.retry_handler.enrich_with_retry = AsyncMock()
         consumer.retry_handler.update_with_retry = AsyncMock()
 
         # Should not raise exception
         await consumer._enrich_bookmark(event)
 
-        # Should not call fetch or update when tenant_id is missing
-        consumer.retry_handler.fetch_with_retry.assert_not_called()
+        # Should not call enrich or update when tenant_id is missing
+        consumer.retry_handler.enrich_with_retry.assert_not_called()
         consumer.retry_handler.update_with_retry.assert_not_called()
 
     async def test_enrich_bookmark_fetch_error_does_not_crash(
         self, sample_bookmark_event
     ):
-        """Test that fetch errors are caught and don't crash consumer."""
+        """Test that enrich errors are caught and don't crash consumer."""
         consumer = BookmarkEnrichmentConsumer()
 
-        # Mock fetch to raise an exception
-        consumer.retry_handler.fetch_with_retry = AsyncMock(
-            side_effect=Exception("Fetch failed")
+        # Mock enrich to raise an exception
+        consumer.retry_handler.enrich_with_retry = AsyncMock(
+            side_effect=Exception("Enrich failed")
         )
         consumer.retry_handler.update_with_retry = AsyncMock()
 
         # Should not raise exception
         await consumer._enrich_bookmark(sample_bookmark_event)
 
-        # Fetch should have been called
-        consumer.retry_handler.fetch_with_retry.assert_called_once()
+        # Enrich should have been called
+        consumer.retry_handler.enrich_with_retry.assert_called_once()
 
-        # Update should not be called because fetch failed
+        # Update should not be called because enrich failed
         consumer.retry_handler.update_with_retry.assert_not_called()
 
     async def test_enrich_bookmark_update_error_does_not_crash(
@@ -141,8 +143,8 @@ class TestBookmarkEnrichmentConsumer:
 
         mock_enrichment_result = EnrichmentResult(og_title="Test")
 
-        # Mock fetch to succeed but update to fail
-        consumer.retry_handler.fetch_with_retry = AsyncMock(
+        # Mock enrich to succeed but update to fail
+        consumer.retry_handler.enrich_with_retry = AsyncMock(
             return_value=mock_enrichment_result
         )
         consumer.retry_handler.update_with_retry = AsyncMock(
@@ -153,28 +155,30 @@ class TestBookmarkEnrichmentConsumer:
         await consumer._enrich_bookmark(sample_bookmark_event)
 
         # Both should have been called
-        consumer.retry_handler.fetch_with_retry.assert_called_once()
+        consumer.retry_handler.enrich_with_retry.assert_called_once()
         consumer.retry_handler.update_with_retry.assert_called_once()
 
-    async def test_enrich_bookmark_calls_retry_handler_fetch(
+    async def test_enrich_bookmark_calls_retry_handler_enrich(
         self, sample_bookmark_event
     ):
-        """Test that enrichment calls retry handler's fetch method."""
+        """Test that enrichment calls retry handler's enrich method."""
         consumer = BookmarkEnrichmentConsumer()
 
         mock_enrichment_result = EnrichmentResult(og_title="Test")
-        consumer.retry_handler.fetch_with_retry = AsyncMock(
+        consumer.retry_handler.enrich_with_retry = AsyncMock(
             return_value=mock_enrichment_result
         )
         consumer.retry_handler.update_with_retry = AsyncMock(return_value=True)
 
         await consumer._enrich_bookmark(sample_bookmark_event)
 
-        # Verify fetch_with_retry was called with fetcher and URL
-        consumer.retry_handler.fetch_with_retry.assert_called_once()
-        args = consumer.retry_handler.fetch_with_retry.call_args[0]
-        assert args[0] == consumer.fetcher
+        # Verify enrich_with_retry was called with orchestrator, URL, bookmark_id, and tenant_id
+        consumer.retry_handler.enrich_with_retry.assert_called_once()
+        args = consumer.retry_handler.enrich_with_retry.call_args[0]
+        assert args[0] == consumer.orchestrator
         assert args[1] == sample_bookmark_event.data["url"]
+        assert args[2] == sample_bookmark_event.data["id"]
+        assert args[3] == sample_bookmark_event.data["tenant_id"]
 
     async def test_enrich_bookmark_calls_retry_handler_update(
         self, sample_bookmark_event
@@ -183,7 +187,7 @@ class TestBookmarkEnrichmentConsumer:
         consumer = BookmarkEnrichmentConsumer()
 
         mock_enrichment_result = EnrichmentResult(og_title="Test")
-        consumer.retry_handler.fetch_with_retry = AsyncMock(
+        consumer.retry_handler.enrich_with_retry = AsyncMock(
             return_value=mock_enrichment_result
         )
         consumer.retry_handler.update_with_retry = AsyncMock(return_value=True)
@@ -203,7 +207,7 @@ class TestBookmarkEnrichmentConsumer:
         consumer = BookmarkEnrichmentConsumer()
 
         mock_enrichment_result = EnrichmentResult(og_title="Test")
-        consumer.retry_handler.fetch_with_retry = AsyncMock(
+        consumer.retry_handler.enrich_with_retry = AsyncMock(
             return_value=mock_enrichment_result
         )
         consumer.retry_handler.update_with_retry = AsyncMock(return_value=True)
@@ -222,7 +226,7 @@ class TestBookmarkEnrichmentConsumer:
         consumer = BookmarkEnrichmentConsumer()
 
         mock_enrichment_result = EnrichmentResult(og_title="Test")
-        consumer.retry_handler.fetch_with_retry = AsyncMock(
+        consumer.retry_handler.enrich_with_retry = AsyncMock(
             return_value=mock_enrichment_result
         )
         consumer.retry_handler.update_with_retry = AsyncMock(return_value=True)
