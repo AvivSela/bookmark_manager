@@ -7,7 +7,11 @@ import io
 from typing import Optional, Dict, Any
 from PIL import Image
 
-from app.enrichers.core.base_enricher import BaseEnricher, EnricherContext, EnricherResult
+from app.enrichers.core.base_enricher import (
+    BaseEnricher,
+    EnricherContext,
+    EnricherResult,
+)
 from app.enrichers.core.resource_types import ResourceType
 from app.config import get_settings
 
@@ -60,11 +64,13 @@ class ImageEnricher(BaseEnricher):
 
             # Add dimensions if successfully extracted
             if dimensions:
-                metadata.update({
-                    "format": dimensions.get("format"),
-                    "width": dimensions.get("width"),
-                    "height": dimensions.get("height"),
-                })
+                metadata.update(
+                    {
+                        "format": dimensions.get("format"),
+                        "width": dimensions.get("width"),
+                        "height": dimensions.get("height"),
+                    }
+                )
 
             execution_time = (time.time() - start_time) * 1000
 
@@ -129,7 +135,9 @@ class ImageEnricher(BaseEnricher):
                 "Range": f"bytes=0-{self.MAX_HEADER_SIZE - 1}",
             }
 
-            async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+            async with httpx.AsyncClient(
+                timeout=timeout, follow_redirects=True
+            ) as client:
                 response = await client.get(url, headers=headers)
 
                 # Accept both 206 (Partial Content) and 200 (full file if small)

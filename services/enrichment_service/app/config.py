@@ -42,7 +42,6 @@ class Settings(BaseSettings):
     enabled_enrichers: str = "webpage,image,dataset,api"
     max_parallel_enrichers: int = 5
 
-
     # Image enricher settings
     image_max_header_size: int = 32 * 1024  # 32KB
     image_timeout_seconds: float = 10.0

@@ -36,21 +36,22 @@ class EnrichmentOrchestrator:
         # Register ImageEnricher
         if "image" not in registry.list_enrichers():
             from app.enrichers.implementations.image_enricher import ImageEnricher
+
             registry.register(ImageEnricher)
 
         # Register DatasetEnricher
         if "dataset" not in registry.list_enrichers():
             from app.enrichers.implementations.dataset_enricher import DatasetEnricher
+
             registry.register(DatasetEnricher)
 
         # Register ApiEnricher
         if "api" not in registry.list_enrichers():
             from app.enrichers.implementations.api_enricher import ApiEnricher
+
             registry.register(ApiEnricher)
 
-    def _select_enrichers(
-        self,
-        resource_type: "ResourceType") -> list["BaseEnricher"]:
+    def _select_enrichers(self, resource_type: "ResourceType") -> list["BaseEnricher"]:
         """
         Select applicable enrichers for the resource type with fallback logic.
 
@@ -211,7 +212,6 @@ class EnrichmentOrchestrator:
         # Filter to only fields that EnrichmentResult accepts
         # This allows enrichers to add extra fields without breaking the schema
         valid_fields = {
-            k: v for k, v in merged_data.items()
-            if k in EnrichmentResult.model_fields
+            k: v for k, v in merged_data.items() if k in EnrichmentResult.model_fields
         }
         return EnrichmentResult(**valid_fields)

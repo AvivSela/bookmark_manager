@@ -74,9 +74,7 @@ def swagger_2_spec():
                 "get": {"summary": "List items"},
             },
         },
-        "securityDefinitions": {
-            "oauth2": {"type": "oauth2", "flow": "implicit"}
-        },
+        "securityDefinitions": {"oauth2": {"type": "oauth2", "flow": "implicit"}},
     }
 
 
@@ -119,7 +117,9 @@ class TestApiEnricher:
         assert api_enricher.is_applicable(ResourceType.DATASET) is False
 
     @pytest.mark.asyncio
-    async def test_detect_openapi_spec(self, api_enricher, enricher_context, respx_mock):
+    async def test_detect_openapi_spec(
+        self, api_enricher, enricher_context, respx_mock
+    ):
         """Test detection of OpenAPI spec."""
         # Mock HEAD requests - fail for first paths, succeed for /openapi.json
         respx_mock.head("https://api.example.com/openapi.json").mock(
@@ -261,9 +261,7 @@ class TestApiEnricher:
     async def test_no_spec_found(self, api_enricher, enricher_context, respx_mock):
         """Test handling when no OpenAPI spec exists."""
         # Mock all HEAD requests to return 404
-        respx_mock.head(url__regex=r".*").mock(
-            return_value=httpx.Response(404)
-        )
+        respx_mock.head(url__regex=r".*").mock(return_value=httpx.Response(404))
 
         # Mock GET request for HTML fallback (but return minimal HTML)
         respx_mock.get("https://api.example.com/").mock(

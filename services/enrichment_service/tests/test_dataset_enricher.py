@@ -101,18 +101,36 @@ class TestDatasetEnricher:
 
     def test_extract_format_from_url(self, dataset_enricher):
         """Test format detection from file extension."""
-        assert dataset_enricher._detect_format_from_url("https://example.com/data.csv") == "csv"
-        assert dataset_enricher._detect_format_from_url("https://example.com/data.json") == "json"
-        assert dataset_enricher._detect_format_from_url("https://example.com/data.parquet") == "parquet"
-        assert dataset_enricher._detect_format_from_url("https://example.com/data.xml") == "xml"
-        assert dataset_enricher._detect_format_from_url("https://example.com/noextension") is None
+        assert (
+            dataset_enricher._detect_format_from_url("https://example.com/data.csv")
+            == "csv"
+        )
+        assert (
+            dataset_enricher._detect_format_from_url("https://example.com/data.json")
+            == "json"
+        )
+        assert (
+            dataset_enricher._detect_format_from_url("https://example.com/data.parquet")
+            == "parquet"
+        )
+        assert (
+            dataset_enricher._detect_format_from_url("https://example.com/data.xml")
+            == "xml"
+        )
+        assert (
+            dataset_enricher._detect_format_from_url("https://example.com/noextension")
+            is None
+        )
 
     def test_content_type_to_format(self, dataset_enricher):
         """Test Content-Type to format mapping."""
         assert dataset_enricher._content_type_to_format("text/csv") == "csv"
         assert dataset_enricher._content_type_to_format("application/json") == "json"
         assert dataset_enricher._content_type_to_format("text/xml") == "xml"
-        assert dataset_enricher._content_type_to_format("application/x-parquet") == "parquet"
+        assert (
+            dataset_enricher._content_type_to_format("application/x-parquet")
+            == "parquet"
+        )
         assert dataset_enricher._content_type_to_format("text/html") is None
 
     def test_format_file_size(self, dataset_enricher):

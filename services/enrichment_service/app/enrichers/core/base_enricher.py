@@ -28,7 +28,7 @@ class EnricherContext:
 class EnricherResult:
     """Result from a single enricher."""
 
-    enricher: 'BaseEnricher'
+    enricher: "BaseEnricher"
     success: bool
     data: Dict[str, Any]  # Enriched fields
     error: Optional[str] = None
@@ -59,10 +59,7 @@ class BaseEnricher(ABC):
 
         try:
             # Run enrichment with timeout
-            result = await asyncio.wait_for(
-                self.enrich(context),
-                timeout=self.timeout
-            )
+            result = await asyncio.wait_for(self.enrich(context), timeout=self.timeout)
             return result
 
         except asyncio.TimeoutError:

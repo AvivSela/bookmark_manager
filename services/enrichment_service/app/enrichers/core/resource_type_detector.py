@@ -200,10 +200,21 @@ class ResourceTypeDetector:
         ext_type_info = self._detect_from_file_extension(url)
 
         # Use result only if they agree and non-UNKNOWN, or exactly one is UNKNOWN
-        if url_type_info.primary_type == ext_type_info.primary_type and url_type_info.primary_type != ResourceType.UNKNOWN:
+        if (
+            url_type_info.primary_type == ext_type_info.primary_type
+            and url_type_info.primary_type != ResourceType.UNKNOWN
+        ):
             type_info = url_type_info
-        elif ResourceType.UNKNOWN in (url_type_info.primary_type, ext_type_info.primary_type) and url_type_info.primary_type != ext_type_info.primary_type:
-            type_info = url_type_info if url_type_info.primary_type != ResourceType.UNKNOWN else ext_type_info
+        elif (
+            ResourceType.UNKNOWN
+            in (url_type_info.primary_type, ext_type_info.primary_type)
+            and url_type_info.primary_type != ext_type_info.primary_type
+        ):
+            type_info = (
+                url_type_info
+                if url_type_info.primary_type != ResourceType.UNKNOWN
+                else ext_type_info
+            )
         else:
             # Both UNKNOWN or both non-UNKNOWN but disagree - fall through
             type_info = None
@@ -278,7 +289,6 @@ class ResourceTypeDetector:
             primary_type=ResourceType.UNKNOWN,
             detection_method="file_extension",
         )
-
 
     def _detect_from_og_type(self, og_type: str) -> ResourceTypeInfo:
         """Detect resource type from Open Graph type."""

@@ -9,7 +9,11 @@ from typing import Optional, Dict, Any, List
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 
-from app.enrichers.core.base_enricher import BaseEnricher, EnricherContext, EnricherResult
+from app.enrichers.core.base_enricher import (
+    BaseEnricher,
+    EnricherContext,
+    EnricherResult,
+)
 from app.enrichers.core.resource_types import ResourceType
 from app.config import get_settings
 
@@ -24,9 +28,7 @@ class ApiEnricher(BaseEnricher):
         super().__init__(config)
         # Parse spec paths from config
         self.spec_paths = [
-            path.strip()
-            for path in settings.api_spec_paths.split(",")
-            if path.strip()
+            path.strip() for path in settings.api_spec_paths.split(",") if path.strip()
         ]
 
     async def enrich(self, context: EnricherContext) -> EnricherResult:
@@ -113,7 +115,12 @@ class ApiEnricher(BaseEnricher):
                         # Accept JSON, YAML, or generic text/plain
                         if any(
                             ct in content_type
-                            for ct in ["json", "yaml", "text/plain", "application/x-yaml"]
+                            for ct in [
+                                "json",
+                                "yaml",
+                                "text/plain",
+                                "application/x-yaml",
+                            ]
                         ):
                             self.logger.info(f"Found OpenAPI spec at {spec_url}")
                             return spec_url
@@ -140,7 +147,9 @@ class ApiEnricher(BaseEnricher):
         headers = {"User-Agent": settings.user_agent}
 
         try:
-            async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+            async with httpx.AsyncClient(
+                timeout=timeout, follow_redirects=True
+            ) as client:
                 response = await client.get(spec_url, headers=headers)
                 response.raise_for_status()
 
@@ -198,7 +207,12 @@ class ApiEnricher(BaseEnricher):
                 if isinstance(path_methods, dict):
                     # Count HTTP methods, excluding special keys like 'parameters'
                     endpoint_count += len(
-                        [k for k in path_methods.keys() if k not in ("parameters", "servers", "summary", "description")]
+                        [
+                            k
+                            for k in path_methods.keys()
+                            if k
+                            not in ("parameters", "servers", "summary", "description")
+                        ]
                     )
             metadata["endpoint_count"] = endpoint_count
 
@@ -269,7 +283,9 @@ class ApiEnricher(BaseEnricher):
         metadata = {}
 
         try:
-            async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+            async with httpx.AsyncClient(
+                timeout=timeout, follow_redirects=True
+            ) as client:
                 response = await client.get(url, headers=headers)
                 response.raise_for_status()
 
@@ -282,7 +298,9 @@ class ApiEnricher(BaseEnricher):
 
                 # Try to find version in common patterns
                 version_patterns = [
-                    soup.find(string=re.compile(r"Version\s*:?\s*[\d.]+", re.IGNORECASE)),
+                    soup.find(
+                        string=re.compile(r"Version\s*:?\s*[\d.]+", re.IGNORECASE)
+                    ),
                     soup.find("span", class_=re.compile(r"version", re.IGNORECASE)),
                     soup.find("div", class_=re.compile(r"version", re.IGNORECASE)),
                 ]

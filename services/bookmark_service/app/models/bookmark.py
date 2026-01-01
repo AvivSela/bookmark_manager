@@ -118,7 +118,9 @@ class Bookmark(Base):
     enrichments = Column(JSON, nullable=True)
 
     # Resource type detection (kept separate for filtering/querying)
-    resource_type = Column(String(50), nullable=True)  # 'webpage', 'api', 'dataset', etc.
+    resource_type = Column(
+        String(50), nullable=True
+    )  # 'webpage', 'api', 'dataset', etc.
 
     # Validation fields
     validation_status = Column(
@@ -138,7 +140,9 @@ class Bookmark(Base):
         Index("idx_validation_status", "validation_status"),
         Index("idx_validation_last_checked", "validation_last_checked"),
         Index("idx_pending_validation", "validation_status", "validation_last_checked"),
-        Index("idx_resource_type", "resource_type"),  # NEW: Index for resource type filtering
+        Index(
+            "idx_resource_type", "resource_type"
+        ),  # NEW: Index for resource type filtering
         UniqueConstraint("tenant_id", "url", name="uq_tenant_url"),
     )
 

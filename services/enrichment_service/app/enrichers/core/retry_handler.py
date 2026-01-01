@@ -44,7 +44,11 @@ class EnrichmentRetryHandler:
         reraise=True,
     )
     async def enrich_with_retry(
-        self, orchestrator: EnrichmentOrchestrator, url: str, bookmark_id: str, tenant_id: str
+        self,
+        orchestrator: EnrichmentOrchestrator,
+        url: str,
+        bookmark_id: str,
+        tenant_id: str,
     ):
         """
         Enrich bookmark with retry logic using orchestrator.

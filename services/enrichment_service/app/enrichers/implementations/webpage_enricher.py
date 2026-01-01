@@ -7,7 +7,11 @@ from typing import Optional, Dict, Any
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 
-from app.enrichers.core.base_enricher import BaseEnricher, EnricherContext, EnricherResult
+from app.enrichers.core.base_enricher import (
+    BaseEnricher,
+    EnricherContext,
+    EnricherResult,
+)
 from app.enrichers.core.resource_types import ResourceType
 from app.config import get_settings
 
@@ -44,9 +48,13 @@ class WebPageEnricher(BaseEnricher):
                 "Accept": "text/html,application/xhtml+xml",
             }
 
-            async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+            async with httpx.AsyncClient(
+                timeout=timeout, follow_redirects=True
+            ) as client:
                 # Stream response to check size before downloading entire content
-                async with client.stream("GET", context.url, headers=headers) as response:
+                async with client.stream(
+                    "GET", context.url, headers=headers
+                ) as response:
                     response.raise_for_status()
 
                     # Only process HTML responses

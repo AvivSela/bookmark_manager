@@ -91,7 +91,9 @@ class TestImageEnricher:
         respx_mock.get("https://example.com/image.jpg").mock(
             return_value=httpx.Response(
                 206,  # Partial Content
-                headers={"content-range": f"bytes 0-{len(sample_jpeg_bytes)-1}/{len(sample_jpeg_bytes)}"},
+                headers={
+                    "content-range": f"bytes 0-{len(sample_jpeg_bytes) - 1}/{len(sample_jpeg_bytes)}"
+                },
                 content=sample_jpeg_bytes[:32768],  # First 32KB
             )
         )
@@ -132,7 +134,9 @@ class TestImageEnricher:
         respx_mock.get("https://example.com/image.png").mock(
             return_value=httpx.Response(
                 206,
-                headers={"content-range": f"bytes 0-{len(sample_png_bytes)-1}/{len(sample_png_bytes)}"},
+                headers={
+                    "content-range": f"bytes 0-{len(sample_png_bytes) - 1}/{len(sample_png_bytes)}"
+                },
                 content=sample_png_bytes[:32768],
             )
         )

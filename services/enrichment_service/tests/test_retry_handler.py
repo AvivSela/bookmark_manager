@@ -2,7 +2,10 @@ import pytest
 import httpx
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
-from app.enrichers.core.retry_handler import EnrichmentRetryHandler, is_retryable_http_error
+from app.enrichers.core.retry_handler import (
+    EnrichmentRetryHandler,
+    is_retryable_http_error,
+)
 from app.schemas.enrichment import EnrichmentResult
 
 

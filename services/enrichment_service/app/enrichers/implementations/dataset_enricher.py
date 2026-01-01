@@ -8,7 +8,11 @@ from typing import Optional, Dict, Any
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
-from app.enrichers.core.base_enricher import BaseEnricher, EnricherContext, EnricherResult
+from app.enrichers.core.base_enricher import (
+    BaseEnricher,
+    EnricherContext,
+    EnricherResult,
+)
 from app.enrichers.core.resource_types import ResourceType
 from app.config import get_settings
 
@@ -154,7 +158,9 @@ class DatasetEnricher(BaseEnricher):
 
         try:
             # Fetch page HTML
-            async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+            async with httpx.AsyncClient(
+                timeout=timeout, follow_redirects=True
+            ) as client:
                 response = await client.get(url, headers=headers)
                 response.raise_for_status()
 
@@ -165,7 +171,9 @@ class DatasetEnricher(BaseEnricher):
                     )
 
                 # Parse HTML
-                soup = BeautifulSoup(response.text[:settings.dataset_max_page_size], "lxml")
+                soup = BeautifulSoup(
+                    response.text[: settings.dataset_max_page_size], "lxml"
+                )
 
             # Extract metadata using platform selectors
             config = self.PLATFORM_PATTERNS[platform]
@@ -225,7 +233,9 @@ class DatasetEnricher(BaseEnricher):
         metadata = {}
 
         try:
-            async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+            async with httpx.AsyncClient(
+                timeout=timeout, follow_redirects=True
+            ) as client:
                 response = await client.head(url, headers=headers)
                 response.raise_for_status()
 

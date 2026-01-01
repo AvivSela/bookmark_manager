@@ -1,6 +1,8 @@
 # Environment variables and secrets
 .env
 pgadmin/pgpass
+pgadmin/servers.json
+.claude/settings.local.json
 
 # Docker volumes and data
 postgres_data/
