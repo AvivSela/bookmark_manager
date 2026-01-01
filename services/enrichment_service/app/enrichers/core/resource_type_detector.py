@@ -1,7 +1,6 @@
 """Resource type detection using multiple strategies."""
 
 import re
-import httpx
 import logging
 from typing import Optional, Dict, Pattern
 from dataclasses import dataclass
@@ -18,8 +17,7 @@ logger = logging.getLogger(__name__)
 class ResourceDetectorConfig:
     """Configuration for resource type detector."""
 
-    enable_head_requests: bool = False
-    head_request_timeout: float = 5.0
+    pass
 
 
 class ResourceTypeDetector:
@@ -31,7 +29,6 @@ class ResourceTypeDetector:
             r"api\.",  # api.example.com
             r"/api/",  # example.com/api/endpoint
             r"/v\d+/",  # example.com/v1/resource
-            r"\.json$",  # example.com/data.json
         ],
         ResourceType.DATASET: [
             r"\.csv$",
@@ -186,7 +183,6 @@ class ResourceTypeDetector:
     async def detect_resource_type(
         self,
         url: str,
-        use_head_request: Optional[bool] = None,
         og_type: Optional[str] = None,
     ) -> ResourceTypeInfo:
         """
@@ -194,7 +190,6 @@ class ResourceTypeDetector:
 
         Args:
             url: Target URL
-            use_head_request: Override config for HEAD request (None = use config)
             og_type: Optional og:type from metadata (if already fetched)
 
         Returns:
@@ -222,22 +217,7 @@ class ResourceTypeDetector:
 
         # Fall through to more reliable strategies below
 
-        # Strategy 2: Content-Type header (OPTIONAL - requires HEAD)
-        should_use_head = (
-            use_head_request
-            if use_head_request is not None
-            else self.config.enable_head_requests
-        )
-        if should_use_head:
-            type_info = await self._detect_from_content_type(url)
-            if type_info.primary_type != ResourceType.UNKNOWN:
-                logger.info(
-                    f"Detected resource type: {type_info.primary_type.value} "
-                    f"(method: {type_info.detection_method})"
-                )
-                return type_info
-
-        # Strategy 3: og:type (if provided)
+        # Strategy 2: og:type (if provided)
         if og_type:
             type_info = self._detect_from_og_type(og_type)
             if type_info.primary_type != ResourceType.UNKNOWN:
@@ -299,41 +279,6 @@ class ResourceTypeDetector:
             detection_method="file_extension",
         )
 
-    async def _detect_from_content_type(self, url: str) -> ResourceTypeInfo:
-        """Detect resource type from HTTP Content-Type header."""
-        try:
-            async with httpx.AsyncClient(
-                timeout=self.config.head_request_timeout
-            ) as client:
-                response = await client.head(url, follow_redirects=True)
-                content_type = response.headers.get("content-type", "").lower()
-
-                # Extract base content type (before semicolon)
-                base_content_type = content_type.split(";")[0].strip()
-
-                # Check exact match
-                if base_content_type in self.CONTENT_TYPE_MAP:
-                    return ResourceTypeInfo(
-                        primary_type=self.CONTENT_TYPE_MAP[base_content_type],
-                        detection_method="content_type",
-                    )
-
-                # Check prefix match (e.g., "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-                for ct_prefix, resource_type in self.CONTENT_TYPE_MAP.items():
-                    if base_content_type.startswith(ct_prefix):
-                        return ResourceTypeInfo(
-                            primary_type=resource_type,
-                            detection_method="content_type",
-                        )
-
-        except Exception as e:
-            logger.debug(f"Error fetching Content-Type for {url}: {e}")
-
-        # Failed to detect
-        return ResourceTypeInfo(
-            primary_type=ResourceType.UNKNOWN,
-            detection_method="content_type",
-        )
 
     def _detect_from_og_type(self, og_type: str) -> ResourceTypeInfo:
         """Detect resource type from Open Graph type."""

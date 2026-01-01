@@ -48,7 +48,11 @@
       "Bash(git mv:*)",
       "Bash(grep:*)",
       "Bash(.venv/bin/python:*)",
-      "Bash(.venv/bin/pytest tests/test_retry_handler.py tests/test_bookmark_service_client.py -v)"
+      "Bash(.venv/bin/pytest tests/test_retry_handler.py tests/test_bookmark_service_client.py -v)",
+      "Bash('http://localhost:8000/bookmarks' )",
+      "Bash(\"http://localhost:8000/bookmarks/5b726ea1-3cf8-4b29-a544-954f88b878f7\" )",
+      "Bash(.venv/bin/python3:*)",
+      "Bash(sudo docker-compose restart:*)"
     ]
   }
 }

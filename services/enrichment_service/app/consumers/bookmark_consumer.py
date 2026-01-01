@@ -36,10 +36,7 @@ class BookmarkEnrichmentConsumer:
         self.consumer = None
 
         # Create resource type detector
-        detector_config = ResourceDetectorConfig(
-            enable_head_requests=settings.enable_resource_type_head_requests,
-            head_request_timeout=settings.resource_type_head_timeout,
-        )
+        detector_config = ResourceDetectorConfig()
         detector = ResourceTypeDetector(detector_config)
 
         # Create enrichment orchestrator

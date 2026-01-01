@@ -172,4 +172,4 @@ class WebPageEnricher(BaseEnricher):
     @property
     def required(self) -> bool:
         """WebPageEnricher is required (core enrichment)."""
-        return True
+        return False

@@ -42,11 +42,6 @@ class Settings(BaseSettings):
     enabled_enrichers: str = "webpage,image,dataset,api"
     max_parallel_enrichers: int = 5
 
-    # Resource type detection settings
-    enable_resource_type_head_requests: bool = (
-        False  # Disable HEAD by default (performance)
-    )
-    resource_type_head_timeout: float = 5.0
 
     # Image enricher settings
     image_max_header_size: int = 32 * 1024  # 32KB
