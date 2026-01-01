@@ -35,7 +35,7 @@ class EnrichmentOrchestrator:
 
     def _select_enrichers(
         self,
-        resource_type: "ResourceType") -> List["BaseEnricher"]:
+        resource_type: "ResourceType") -> list["BaseEnricher"]:
         """
         Select applicable enrichers for the resource type with fallback logic.
 

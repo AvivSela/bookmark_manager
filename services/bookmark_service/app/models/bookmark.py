@@ -8,6 +8,7 @@ from sqlalchemy import (
     TypeDecorator,
     CHAR,
     UniqueConstraint,
+    JSON,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.engine import Dialect
@@ -113,18 +114,11 @@ class Bookmark(Base):
         nullable=False,
     )
 
-    # Enrichment fields - Open Graph metadata
-    og_title = Column(String(500), nullable=True)
-    og_description = Column(Text, nullable=True)
-    og_image = Column(String(2048), nullable=True)
-    og_type = Column(String(100), nullable=True)
-    og_site_name = Column(String(200), nullable=True)
+    # Enrichment fields - All enrichment data stored as JSON
+    enrichments = Column(JSON, nullable=True)
 
-    # Enrichment fields - Standard meta tags (fallback)
-    meta_description = Column(Text, nullable=True)
-
-    # Enrichment fields - Favicon
-    favicon_url = Column(String(2048), nullable=True)
+    # Resource type detection (kept separate for filtering/querying)
+    resource_type = Column(String(50), nullable=True)  # 'webpage', 'api', 'dataset', etc.
 
     # Validation fields
     validation_status = Column(
@@ -144,6 +138,7 @@ class Bookmark(Base):
         Index("idx_validation_status", "validation_status"),
         Index("idx_validation_last_checked", "validation_last_checked"),
         Index("idx_pending_validation", "validation_status", "validation_last_checked"),
+        Index("idx_resource_type", "resource_type"),  # NEW: Index for resource type filtering
         UniqueConstraint("tenant_id", "url", name="uq_tenant_url"),
     )
 

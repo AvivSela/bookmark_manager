@@ -8,7 +8,7 @@ from pydantic import (
 )
 from datetime import datetime
 from uuid import UUID
-from typing import Optional
+from typing import Optional, Dict, Any
 
 
 class BookmarkBase(BaseModel):
@@ -52,13 +52,8 @@ class BookmarkUpdate(BaseModel):
     description: Optional[str] = Field(None, max_length=5000)
 
     # Enrichment fields (populated by enrichment service)
-    og_title: Optional[str] = Field(None, max_length=500)
-    og_description: Optional[str] = Field(None, max_length=5000)
-    og_image: Optional[str] = Field(None, max_length=2048)
-    og_type: Optional[str] = Field(None, max_length=100)
-    og_site_name: Optional[str] = Field(None, max_length=200)
-    meta_description: Optional[str] = Field(None, max_length=5000)
-    favicon_url: Optional[str] = Field(None, max_length=2048)
+    enrichments: Optional[Dict[str, Any]] = None
+    resource_type: Optional[str] = Field(None, max_length=50)
 
     # Validation fields (populated by validation service)
     validation_status: Optional[str] = Field(None, max_length=20)
@@ -93,13 +88,8 @@ class BookmarkResponse(BookmarkBase):
     changed_time: datetime
 
     # Enrichment fields
-    og_title: Optional[str] = None
-    og_description: Optional[str] = None
-    og_image: Optional[str] = None
-    og_type: Optional[str] = None
-    og_site_name: Optional[str] = None
-    meta_description: Optional[str] = None
-    # favicon_url: Optional[str] = None
+    enrichments: Optional[Dict[str, Any]] = None
+    resource_type: Optional[str] = None
 
     # Validation fields
     validation_status: Optional[str] = None

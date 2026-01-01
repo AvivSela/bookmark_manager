@@ -75,7 +75,8 @@ class BookmarkServiceClient:
         url = f"{self.base_url}/bookmarks/{bookmark_id}"
         headers = {"X-Tenant-ID": tenant_id}
 
-        payload = {
+        # Build enrichments object with all enrichment data
+        enrichments = {
             "og_title": enrichment_result.og_title,
             "og_description": enrichment_result.og_description,
             "og_image": enrichment_result.og_image,
@@ -83,6 +84,18 @@ class BookmarkServiceClient:
             "og_site_name": enrichment_result.og_site_name,
             "meta_description": enrichment_result.meta_description,
             "favicon_url": enrichment_result.favicon_url,
+            "screenshot_url": enrichment_result.screenshot_url,
+            "api_metadata": enrichment_result.api_metadata,
+            "dataset_metadata": enrichment_result.dataset_metadata,
+            "media_metadata": enrichment_result.media_metadata,
+        }
+
+        # Filter out None values to keep JSON clean
+        enrichments = {k: v for k, v in enrichments.items() if v is not None}
+
+        payload = {
+            "enrichments": enrichments,
+            "resource_type": enrichment_result.resource_type,
         }
 
         logger.debug(f"Sending PUT request to {url} for bookmark {bookmark_id}")

@@ -45,10 +45,12 @@ class TestBookmarkServiceClient:
                     bookmark_id, tenant_id, sample_enrichment_result
                 )
 
-                # Verify payload structure
+                # Verify payload structure - enrichments should be nested in enrichments object
                 request = route.calls.last.request
                 payload = request.content.decode("utf-8")
 
+                # Check that enrichments are nested
+                assert '"enrichments"' in payload
                 assert '"og_title": "Test Title"' in payload
                 assert '"og_description": "Test Description"' in payload
                 assert '"og_image": "https://example.com/image.jpg"' in payload
