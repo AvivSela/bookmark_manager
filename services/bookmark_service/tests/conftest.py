@@ -8,7 +8,11 @@ from app.models.bookmark import Bookmark
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (  # type: ignore[attr-defined]
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.pool import StaticPool
 
 # Test database URL - using in-memory SQLite for fast tests
@@ -101,7 +105,7 @@ async def client(
 
     # Create async HTTP client with tenant authentication header
     async with AsyncClient(
-        transport=ASGITransport(app=app),
+        transport=ASGITransport(app=app),  # type: ignore[arg-type]
         base_url="http://test",
         headers={"X-Tenant-ID": test_tenant_id},
     ) as ac:
@@ -133,7 +137,7 @@ def authenticated_client(test_db: AsyncSession):
         app.dependency_overrides[get_db] = override_get_db
 
         return AsyncClient(
-            transport=ASGITransport(app=app),
+            transport=ASGITransport(app=app),  # type: ignore[arg-type]
             base_url="http://test",
             headers={"X-Tenant-ID": tenant_id},
         )

@@ -29,7 +29,7 @@ class TestHTTPExceptionHandler:
         from app.main import app
 
         async with AsyncClient(
-            transport=ASGITransport(app=app),
+            transport=ASGITransport(app=app),  # type: ignore[arg-type]
             base_url="http://test",
             headers={"X-Request-ID": custom_request_id},
         ) as test_client:
@@ -61,7 +61,8 @@ class TestHTTPExceptionHandler:
         from app.main import app
 
         async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
+            transport=ASGITransport(app=app),  # type: ignore[arg-type]
+            base_url="http://test"
         ) as bare_client:
             response = await bare_client.get("/bookmarks")
 
@@ -114,7 +115,8 @@ class TestHTTPExceptionHandler:
         with patch("app.validation_exception_handler.logger") as mock_logger:
             # Trigger a 4xx error (401)
             async with AsyncClient(
-                transport=ASGITransport(app=app), base_url="http://test"
+                transport=ASGITransport(app=app),  # type: ignore[arg-type]
+                base_url="http://test"
             ) as test_client:
                 await test_client.get("/bookmarks")
 

@@ -2,8 +2,8 @@ import json
 import logging
 from typing import Any, Dict, Optional
 
-from aiokafka import AIOKafkaProducer
-from aiokafka.errors import KafkaError, KafkaTimeoutError
+from aiokafka import AIOKafkaProducer  # type: ignore[import-untyped]
+from aiokafka.errors import KafkaError, KafkaTimeoutError  # type: ignore[import-untyped]
 
 from app.kafka.schemas import BookmarkEvent
 

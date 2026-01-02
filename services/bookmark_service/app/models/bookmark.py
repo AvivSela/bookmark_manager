@@ -43,7 +43,7 @@ class GUID(TypeDecorator):
             return dialect.type_descriptor(PG_UUID(as_uuid=True))
         return dialect.type_descriptor(CHAR(36))
 
-    def process_bind_param(
+    def process_bind_param(  # type: ignore[override]
         self, value: Optional[uuid.UUID | str], dialect: Dialect
     ) -> Optional[str | uuid.UUID]:
         """Process a value being sent to the database.
@@ -63,7 +63,7 @@ class GUID(TypeDecorator):
             return str(uuid.UUID(value))
         return str(value)
 
-    def process_result_value(
+    def process_result_value(  # type: ignore[override]
         self, value: Optional[str | uuid.UUID], dialect: Dialect
     ) -> Optional[uuid.UUID]:
         """Process a value received from the database.
@@ -82,7 +82,7 @@ class GUID(TypeDecorator):
         return value
 
 
-class Bookmark(Base):
+class Bookmark(Base):  # type: ignore[valid-type,misc]
     """Bookmark database model."""
 
     __tablename__ = "bookmarks"

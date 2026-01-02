@@ -67,9 +67,9 @@ async def request_id_middleware(request: Request, call_next):
 
 
 # Exception handlers
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
-app.add_exception_handler(HTTPException, http_exception_handler)
-app.add_exception_handler(Exception, global_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(Exception, global_exception_handler)  # type: ignore[arg-type]
 
 # Include routers
 app.include_router(health.router)
