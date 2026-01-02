@@ -69,9 +69,7 @@ async def revalidate_all(
 
         if not bookmarks:
             return BatchValidationResponse(
-                job_id=uuid4(),
-                total_bookmarks=0,
-                status="completed"
+                job_id=uuid4(), total_bookmarks=0, status="completed"
             )
 
         logger.info("Manual revalidation triggered for %s bookmarks", len(bookmarks))
@@ -139,9 +137,7 @@ async def revalidate_all(
         results = [r for r in validation_results if r is not None]
 
         return BatchValidationResponse(
-            job_id=job_id,
-            total_bookmarks=len(bookmarks),
-            status="completed"
+            job_id=job_id, total_bookmarks=len(bookmarks), status="completed"
         )
 
     except Exception as e:
@@ -205,9 +201,7 @@ async def validate_bookmark(
 
         await _producer.publish_validation_event(validation_event)
 
-        return ValidationResultResponse(
-            result=validation_result
-        )
+        return ValidationResultResponse(result=validation_result)
 
     except HTTPException:
         raise

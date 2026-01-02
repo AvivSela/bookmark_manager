@@ -62,7 +62,7 @@ class TestHTTPExceptionHandler:
 
         async with AsyncClient(
             transport=ASGITransport(app=app),  # type: ignore[arg-type]
-            base_url="http://test"
+            base_url="http://test",
         ) as bare_client:
             response = await bare_client.get("/bookmarks")
 
@@ -116,7 +116,7 @@ class TestHTTPExceptionHandler:
             # Trigger a 4xx error (401)
             async with AsyncClient(
                 transport=ASGITransport(app=app),  # type: ignore[arg-type]
-                base_url="http://test"
+                base_url="http://test",
             ) as test_client:
                 await test_client.get("/bookmarks")
 

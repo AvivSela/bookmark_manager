@@ -236,7 +236,9 @@ async def update_bookmark(
 
 
 @router.patch(
-    "/{bookmark_id}", response_model=BookmarkResponse, summary="Partially update a bookmark"
+    "/{bookmark_id}",
+    response_model=BookmarkResponse,
+    summary="Partially update a bookmark",
 )
 async def patch_bookmark(
     bookmark_id: UUID,
