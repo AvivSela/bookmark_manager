@@ -33,6 +33,15 @@ else
     FAILED_SERVICES+=("enrichment_service")
 fi
 
+# Run validation service tests
+echo -e "${YELLOW}=== Running Validation Service Tests ===${NC}"
+if (cd services/validation_service && ./run_tests.sh "$@"); then
+    echo -e "${GREEN}✓ Validation Service tests passed${NC}\n"
+else
+    echo -e "${RED}✗ Validation Service tests failed${NC}\n"
+    FAILED_SERVICES+=("validation_service")
+fi
+
 # Summary
 echo -e "${YELLOW}=== Test Summary ===${NC}"
 if [ ${#FAILED_SERVICES[@]} -eq 0 ]; then

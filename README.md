@@ -46,6 +46,10 @@ Once running, you can access:
   - Kafka consumer for bookmark enrichment
   - Health check: http://localhost:8001/health
 
+- **Validation Service**: http://localhost:8002
+  - Validates bookmark URLs and metadata
+  - Health check: http://localhost:8002/health
+
 - **PostgreSQL Database**: `localhost:5432`
   - User: `bookmark_user` (configurable in [.env](.env))
   - Password: `bookmark_pass` (configurable in [.env](.env))
@@ -158,7 +162,8 @@ docker exec -it bookmark-kafka kafka-console-consumer.sh --bootstrap-server loca
 ### Services
 
 - **Bookmark Service**: FastAPI REST API for bookmark CRUD operations with Kafka event publishing
-- **Enrichment Service**: Kafka consumer that enriches bookmarks with Open Graph metadata
+- **Validation Service**: Kafka consumer that validates bookmark URLs and metadata, with retry mechanism
+- **Enrichment Service**: Kafka consumer that enriches validated bookmarks with Open Graph metadata
 - **PostgreSQL 16**: Primary database with Alpine Linux base
 - **Kafka 3.x**: Message broker using KRaft mode (no Zookeeper)
 - **Kafdrop**: Web UI for Kafka management
@@ -167,27 +172,49 @@ docker exec -it bookmark-kafka kafka-console-consumer.sh --bootstrap-server loca
 ### Service Communication
 
 ```
-┌─────────────────┐     Kafka Events      ┌──────────────────┐
-│  Bookmark API   │ ──────────────────────>│  Enrichment Svc  │
-│   (Port 8000)   │  bookmark.created      │   (Port 8001)    │
-└────────┬────────┘                        └────────┬─────────┘
-         │                                          │
-         │               PostgreSQL                 │
-         └──────────────────┬───────────────────────┘
-                            │
-                     ┌──────▼───────┐
-                     │  PostgreSQL  │
-                     │  (Port 5432) │
-                     └──────────────┘
+                        ┌──────────────────┐
+                        │ Validation Svc   │
+                        │   (Port 8002)    │
+                        └────────┬─────────┘
+                                 │
+                                 │ HTTP PUT
+                                 │ (update status)
+                                 ▼
+┌─────────────────┐         ┌───────────────┐         ┌──────────────────┐
+│     Kafka       │<─────── │ Bookmark API  │<─────── │ Enrichment Svc   │
+│ bookmark.created│         │  (Port 8000)  │         │   (Port 8001)    │
+└────────┬────────┘         └───────┬───────┘         └──────────────────┘
+         │                          │                           ▲
+         │                          │                           │
+         │                          │                   HTTP PUT (update metadata)
+         └──────────────────────────┼───────────────────────────┘
+                                    ▼
+                            ┌───────────────┐
+                            │  PostgreSQL   │
+                            │  (Port 5432)  │
+                            └───────────────┘
 ```
 
 **Event Flow:**
 1. User creates bookmark via Bookmark API
-2. Bookmark saved to PostgreSQL
+2. Bookmark saved to PostgreSQL with `pending_validation` status
 3. `bookmarks.bookmark.created` event published to Kafka
-4. Enrichment Service consumes event
-5. Enrichment Service fetches Open Graph metadata
-6. Enrichment Service updates bookmark with metadata
+4. **Validation Service** consumes `bookmark.created` event and validates:
+   - URL accessibility and response codes
+   - Content type validation
+   - Security checks (redirects, HTTPS)
+5. Validation Service calls Bookmark API (HTTP PUT) to update status:
+   - Valid bookmarks → `validated` status
+   - Invalid bookmarks → `validation_failed` status (with retry mechanism for transient failures)
+6. **Enrichment Service** also consumes `bookmark.created` events independently
+7. Enrichment Service fetches Open Graph metadata (runs in parallel with validation)
+8. Enrichment Service calls Bookmark API (HTTP PUT) to update bookmark with metadata and sets status to `enriched`
+
+**Error Handling:**
+- Validation Service retries failed validations with exponential backoff
+- Transient failures (network issues, timeouts) trigger automatic retries
+- Permanent failures (invalid URLs, unsupported content) mark bookmarks as failed
+- All status transitions are tracked in the database via Bookmark API calls
 
 ### Data Persistence
 
@@ -295,6 +322,7 @@ docker compose up -d
 
 - **Bookmark Service**: See [services/bookmark_service/README.md](services/bookmark_service/README.md)
 - **Enrichment Service**: See [services/enrichment_service/README.md](services/enrichment_service/README.md)
+- **Validation Service**: See [services/validation_service/](services/validation_service/)
 
 ## Next Steps
 

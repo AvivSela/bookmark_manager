@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 import httpx
@@ -56,8 +56,8 @@ class URLValidator:
                 else:
                     validation_status = "invalid"
 
-                # Check if URL was redirected
-                final_url = str(response.url) if str(response.url) != url else None
+                # Set final_url if redirects occurred (response.history will have redirect responses)
+                final_url = str(response.url) if response.history else None
 
                 logger.info(
                     "Validation result for %s: %s (HTTP %s)",
@@ -73,7 +73,7 @@ class URLValidator:
                     http_status=response.status_code,
                     final_url=final_url,
                     error_message=None,
-                    checked_at=datetime.utcnow(),
+                    checked_at=datetime.now(UTC),
                 )
 
         except httpx.TimeoutException as e:
@@ -85,7 +85,7 @@ class URLValidator:
                 http_status=None,
                 final_url=None,
                 error_message=f"Request timeout after {settings.validation_timeout_seconds}s",
-                checked_at=datetime.utcnow(),
+                checked_at=datetime.now(UTC),
             )
 
         except httpx.NetworkError as e:
@@ -97,7 +97,7 @@ class URLValidator:
                 http_status=None,
                 final_url=None,
                 error_message=f"Network error: {str(e)}",
-                checked_at=datetime.utcnow(),
+                checked_at=datetime.now(UTC),
             )
 
         except Exception as e:
@@ -111,5 +111,5 @@ class URLValidator:
                 http_status=None,
                 final_url=None,
                 error_message=f"Unexpected error: {str(e)}",
-                checked_at=datetime.utcnow(),
+                checked_at=datetime.now(UTC),
             )

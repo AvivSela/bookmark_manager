@@ -27,33 +27,11 @@ async def test_validate_url_redirect(validator, mock_bookmark_id):
     final_url = "https://example.com/"
 
     with respx.mock:
-        # Mock redirect: HEAD to original URL returns 301, then follows to final URL
+        # Mock the redirect chain: httpx will follow and populate response.history
         respx.head(original_url).mock(
             return_value=httpx.Response(301, headers={"Location": final_url})
         )
         respx.head(final_url).mock(return_value=httpx.Response(200))
-
-        # httpx with follow_redirects=True will handle this automatically
-        # We need to mock the final response with the redirected URL
-        mock_route = respx.head(original_url)
-        mock_route.mock(
-            return_value=httpx.Response(
-                200,
-                headers={},
-                # Final response after redirect
-            )
-        )
-        # Override to simulate redirect
-        mock_route.side_effect = None
-        mock_route.return_value = httpx.Response(200)
-        # Set the final URL on the response
-        response = httpx.Response(200)
-        response._request = httpx.Request("HEAD", final_url)
-
-        # Simpler approach: mock the client behavior
-        respx.head(original_url).mock(
-            return_value=httpx.Response(200, request=httpx.Request("HEAD", final_url))
-        )
 
         result = await validator.validate_url(mock_bookmark_id, original_url)
 

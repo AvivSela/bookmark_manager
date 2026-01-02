@@ -84,8 +84,26 @@ class BookmarkConsumer:
                     break
 
                 try:
-                    # Parse event
-                    event_data = message.value
+                    # Parse event - extract data from envelope
+                    event_envelope = message.value
+
+                    # Extract bookmark data from the envelope's 'data' field
+                    bookmark_data = event_envelope.get('data', {})
+
+                    # Map field names from bookmark service to validation service schema
+                    # bookmark service uses: id, tenant_id
+                    # validation service expects: bookmark_id, user_id
+                    event_data = {
+                        'event_id': event_envelope.get('event_id'),
+                        'event_type': event_envelope.get('event_type'),
+                        'timestamp': event_envelope.get('timestamp'),
+                        'bookmark_id': bookmark_data.get('id'),
+                        'user_id': bookmark_data.get('tenant_id'),
+                        'url': bookmark_data.get('url'),
+                        'title': bookmark_data.get('title'),
+                        'description': bookmark_data.get('description'),
+                    }
+
                     event = BookmarkCreatedEvent(**event_data)
 
                     logger.info(

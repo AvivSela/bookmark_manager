@@ -48,7 +48,7 @@ class BookmarkServiceClient:
 
         headers = {}
         if user_id:
-            headers["X-User-ID"] = user_id
+            headers["X-Tenant-ID"] = user_id
 
         logger.info("Fetching bookmarks from %s with params %s", url, params)
 
@@ -57,7 +57,7 @@ class BookmarkServiceClient:
             response.raise_for_status()
 
             data = response.json()
-            bookmarks = data.get("bookmarks", [])
+            bookmarks = data.get("items", [])
 
             logger.info("Retrieved %s bookmarks from bookmark service", len(bookmarks))
             return bookmarks
@@ -81,7 +81,7 @@ class BookmarkServiceClient:
             httpx.NetworkError: For network errors
         """
         url = f"{self.base_url}/bookmarks/{bookmark_id}"
-        headers = {"X-User-ID": user_id}
+        headers = {"X-Tenant-ID": user_id}
 
         logger.info("Fetching bookmark %s from %s", bookmark_id, url)
 
@@ -119,7 +119,7 @@ class BookmarkServiceClient:
             httpx.NetworkError: For network errors
         """
         url = f"{self.base_url}/bookmarks/{bookmark_id}"
-        headers = {"X-User-ID": user_id}
+        headers = {"X-Tenant-ID": user_id}
 
         # Prepare payload with validation fields
         payload = {

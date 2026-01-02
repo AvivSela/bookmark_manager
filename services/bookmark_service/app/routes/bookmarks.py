@@ -235,6 +235,80 @@ async def update_bookmark(
         ) from exc
 
 
+@router.patch(
+    "/{bookmark_id}", response_model=BookmarkResponse, summary="Partially update a bookmark"
+)
+async def patch_bookmark(
+    bookmark_id: UUID,
+    bookmark_update: BookmarkUpdate,
+    db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_current_tenant_id),
+    kafka_producer: Optional[KafkaEventProducer] = Depends(get_kafka_producer),
+) -> BookmarkResponse:
+    """
+    Partially update an existing bookmark. Only provided fields are updated.
+
+    All fields are optional:
+    - **url**: New URL (must be unique per tenant if changed)
+    - **title**: New title
+    - **description**: New description
+    - **validation_status**: Validation status
+    - **validation_last_checked**: When validation was last performed
+    - **validation_http_status**: HTTP status code from validation
+    - **validation_final_url**: Final URL after redirects
+    - **validation_error_message**: Error message if validation failed
+
+    The `changed_time` field is automatically updated.
+    Requires X-Tenant-ID header for authentication.
+    """
+    # Get existing bookmark for tenant
+    query = select(Bookmark).where(
+        Bookmark.id == bookmark_id, Bookmark.tenant_id == tenant_id
+    )
+    result = await db.execute(query)
+    bookmark = result.scalar_one_or_none()
+
+    if not bookmark:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Bookmark with id '{bookmark_id}' not found",
+        )
+
+    # Update fields
+    update_data = bookmark_update.model_dump(exclude_unset=True)
+
+    # Convert URL to string if present
+    if "url" in update_data:
+        update_data["url"] = str(update_data["url"])
+
+    try:
+        for field, value in update_data.items():
+            setattr(bookmark, field, value)
+
+        # Manually update changed_time for databases that don't support onupdate
+        bookmark.changed_time = datetime.now(timezone.utc)
+
+        await db.commit()
+        await db.refresh(bookmark)
+
+        # Publish bookmark.updated event
+        if kafka_producer:
+            await kafka_producer.publish_event(
+                event_type="updated",
+                bookmark_data=BookmarkResponse.model_validate(bookmark).model_dump(
+                    mode="json"
+                ),
+            )
+
+        return BookmarkResponse.model_validate(bookmark)
+    except IntegrityError as exc:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A bookmark with this URL already exists",
+        ) from exc
+
+
 @router.delete(
     "/{bookmark_id}",
     status_code=status.HTTP_204_NO_CONTENT,
