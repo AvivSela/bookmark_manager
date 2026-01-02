@@ -1,8 +1,11 @@
-import pytest
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, patch
-from uuid import UUID
+from uuid import UUID, uuid4
+
+import pytest
 from app.consumers.bookmark_consumer import BookmarkEnrichmentConsumer
 from app.schemas.enrichment import EnrichmentResult
+from app.schemas.kafka_events import BookmarkEvent
 
 
 @pytest.mark.asyncio
@@ -58,10 +61,6 @@ class TestBookmarkEnrichmentConsumer:
 
     async def test_enrich_bookmark_missing_bookmark_id_logs_error(self):
         """Test that missing bookmark_id field is handled gracefully."""
-        from datetime import datetime, timezone
-        from uuid import uuid4
-        from app.schemas.kafka_events import BookmarkEvent
-
         event = BookmarkEvent(
             event_id=uuid4(),
             event_type="created",
@@ -87,10 +86,6 @@ class TestBookmarkEnrichmentConsumer:
 
     async def test_enrich_bookmark_missing_tenant_id_logs_error(self):
         """Test that missing tenant_id field is handled gracefully."""
-        from datetime import datetime, timezone
-        from uuid import uuid4
-        from app.schemas.kafka_events import BookmarkEvent
-
         event = BookmarkEvent(
             event_id=uuid4(),
             event_type="created",
@@ -237,5 +232,5 @@ class TestBookmarkEnrichmentConsumer:
 
             # Verify success logging
             mock_logger.info.assert_any_call(
-                f"Successfully enriched bookmark {sample_bookmark_event.data['id']}"
+                "Successfully enriched bookmark %s", sample_bookmark_event.data["id"]
             )

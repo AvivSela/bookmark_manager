@@ -1,19 +1,21 @@
-from aiokafka import AIOKafkaConsumer
-from aiokafka.errors import KafkaError
 import json
 import logging
-from uuid import UUID
-from enum import Enum
 from datetime import datetime, timezone
+from enum import Enum
+from uuid import UUID
+
+from aiokafka import AIOKafkaConsumer
+from aiokafka.errors import KafkaError
+
 from app.config import get_settings
-from app.schemas.kafka_events import BookmarkEvent
-from app.enrichers.core.retry_handler import EnrichmentRetryHandler
 from app.enrichers.clients.bookmark_service_client import BookmarkServiceClient
-from app.enrichers.core.resource_type_detector import (
-    ResourceTypeDetector,
-    ResourceDetectorConfig,
-)
 from app.enrichers.core.enrichment_orchestrator import EnrichmentOrchestrator
+from app.enrichers.core.resource_type_detector import (
+    ResourceDetectorConfig,
+    ResourceTypeDetector,
+)
+from app.enrichers.core.retry_handler import EnrichmentRetryHandler
+from app.schemas.kafka_events import BookmarkEvent
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -71,7 +73,7 @@ class BookmarkEnrichmentConsumer:
             await self.bookmark_client.start()
             self.status = ConsumerStatus.HEALTHY
             self.last_error = None
-            logger.info(f"Started consumer for topic {settings.kafka_topic}")
+            logger.info("Started consumer for topic %s", settings.kafka_topic)
         except Exception as e:
             self.status = ConsumerStatus.UNHEALTHY
             self.last_error = str(e)
@@ -95,20 +97,22 @@ class BookmarkEnrichmentConsumer:
                     # Parse event
                     event = BookmarkEvent(**message.value)
                     logger.info(
-                        f"Processing bookmark {event.data.get('id')} for tenant {event.data.get('tenant_id')}"
+                        "Processing bookmark %s for tenant %s",
+                        event.data.get("id"),
+                        event.data.get("tenant_id"),
                     )
 
                     # Enrich with retry
                     await self._enrich_bookmark(event)
 
                 except Exception as e:
-                    logger.error(f"Error processing message: {e}", exc_info=True)
+                    logger.error("Error processing message: %s", e, exc_info=True)
                     # Continue processing next message (don't crash consumer)
 
         except KafkaError as e:
             self.status = ConsumerStatus.UNHEALTHY
             self.last_error = str(e)
-            logger.error(f"Kafka error: {e}", exc_info=True)
+            logger.error("Kafka error: %s", e, exc_info=True)
             raise
 
     async def _enrich_bookmark(self, event: BookmarkEvent):
@@ -121,7 +125,10 @@ class BookmarkEnrichmentConsumer:
 
             if not url or not bookmark_id or not tenant_id:
                 logger.error(
-                    f"Missing required fields in event: url={url}, id={bookmark_id}, tenant_id={tenant_id}"
+                    "Missing required fields in event: url=%s, id=%s, tenant_id=%s",
+                    url,
+                    bookmark_id,
+                    tenant_id,
                 )
                 return
 
@@ -135,8 +142,8 @@ class BookmarkEnrichmentConsumer:
                 self.bookmark_client, UUID(bookmark_id), tenant_id, enrichment_result
             )
 
-            logger.info(f"Successfully enriched bookmark {bookmark_id}")
+            logger.info("Successfully enriched bookmark %s", bookmark_id)
 
         except Exception as e:
             # Log error but continue processing (don't crash consumer)
-            logger.error(f"Failed to enrich bookmark {event.data.get('id')}: {e}")
+            logger.error("Failed to enrich bookmark %s: %s", event.data.get("id"), e)

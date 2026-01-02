@@ -1,19 +1,20 @@
 """Webpage enricher - extracts HTML metadata from web pages."""
 
-import time
-import httpx
 import logging
-from typing import Optional, Dict, Any
-from bs4 import BeautifulSoup
+import time
+from typing import Optional
 from urllib.parse import urljoin, urlparse
 
+import httpx
+from bs4 import BeautifulSoup
+
+from app.config import get_settings
 from app.enrichers.core.base_enricher import (
     BaseEnricher,
     EnricherContext,
     EnricherResult,
 )
 from app.enrichers.core.resource_types import ResourceType
-from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -24,9 +25,6 @@ class WebPageEnricher(BaseEnricher):
 
     # Maximum response size: 5MB to prevent memory exhaustion
     MAX_RESPONSE_SIZE = 5 * 1024 * 1024  # 5MB in bytes
-
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        super().__init__(config)
 
     async def enrich(self, context: EnricherContext) -> EnricherResult:
         """
@@ -126,7 +124,7 @@ class WebPageEnricher(BaseEnricher):
 
         except Exception as e:
             execution_time = (time.time() - start_time) * 1000
-            self.logger.error(f"Failed to enrich webpage {context.url}: {e}")
+            self.logger.error("Failed to enrich webpage %s: %s", context.url, e)
 
             return EnricherResult(
                 enricher=self,

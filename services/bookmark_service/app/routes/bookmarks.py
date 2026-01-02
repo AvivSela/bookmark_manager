@@ -1,22 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy import select, desc, asc
-from uuid import UUID
-from typing import Literal, Optional
 from datetime import datetime, timezone
-from app.database import get_db
-from app.models.bookmark import Bookmark
-from app.schemas.bookmark import (
-    BookmarkCreate,
-    BookmarkUpdate,
-    BookmarkResponse,
-    BookmarkListResponse,
-)
+from typing import Literal, Optional
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import asc, desc, select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.config import get_settings
+from app.database import get_db
 from app.dependencies import get_current_tenant_id
 from app.kafka import get_kafka_producer
 from app.kafka.producer import KafkaEventProducer
+from app.models.bookmark import Bookmark
+from app.schemas.bookmark import (
+    BookmarkCreate,
+    BookmarkListResponse,
+    BookmarkResponse,
+    BookmarkUpdate,
+)
 
 settings = get_settings()
 router = APIRouter(prefix="/bookmarks", tags=["bookmarks"])
@@ -63,12 +65,12 @@ async def create_bookmark(
 
         return BookmarkResponse.model_validate(db_bookmark)
 
-    except IntegrityError:
+    except IntegrityError as exc:
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="A bookmark with this URL already exists",
-        )
+        ) from exc
 
 
 @router.get(
@@ -225,12 +227,12 @@ async def update_bookmark(
             )
 
         return BookmarkResponse.model_validate(bookmark)
-    except IntegrityError:
+    except IntegrityError as exc:
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="A bookmark with this URL already exists",
-        )
+        ) from exc
 
 
 @router.delete(

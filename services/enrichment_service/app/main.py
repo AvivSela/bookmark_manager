@@ -1,9 +1,11 @@
 import asyncio
 import logging
 import signal
-from app.consumers.bookmark_consumer import BookmarkEnrichmentConsumer
-from app.config import get_settings
+
 import uvicorn
+
+from app.config import get_settings
+from app.consumers.bookmark_consumer import BookmarkEnrichmentConsumer
 
 # Configure logging
 logging.basicConfig(
@@ -52,7 +54,7 @@ class EnrichmentService:
 
     async def start(self):
         """Start both FastAPI server and Kafka consumer concurrently."""
-        logger.info(f"Starting {settings.app_name} v{settings.app_version}")
+        logger.info("Starting %s v%s", settings.app_name, settings.app_version)
 
         # Store consumer reference in app state for health checks
         self.set_consumer_in_app_state()

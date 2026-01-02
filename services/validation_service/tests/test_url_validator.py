@@ -1,6 +1,6 @@
+import httpx
 import pytest
 import respx
-import httpx
 
 
 @pytest.mark.asyncio

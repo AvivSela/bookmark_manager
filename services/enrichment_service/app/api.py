@@ -1,5 +1,7 @@
-from fastapi import FastAPI
 from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+
 from app.config import get_settings
 from app.routes import health
 

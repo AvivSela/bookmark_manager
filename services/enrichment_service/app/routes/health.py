@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Request
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+
+from fastapi import APIRouter, Request
 
 router = APIRouter(tags=["health"])
 logger = logging.getLogger(__name__)

@@ -1,7 +1,9 @@
-import httpx
 import logging
 from typing import Optional
 from uuid import UUID
+
+import httpx
+
 from app.config import get_settings
 from app.schemas.enrichment import EnrichmentResult
 
@@ -98,7 +100,7 @@ class BookmarkServiceClient:
             "resource_type": enrichment_result.resource_type,
         }
 
-        logger.debug(f"Sending PUT request to {url} for bookmark {bookmark_id}")
+        logger.debug("Sending PUT request to %s for bookmark %s", url, bookmark_id)
 
         response = await self._client.put(url, json=payload, headers=headers)
 
@@ -109,5 +111,5 @@ class BookmarkServiceClient:
 
         response.raise_for_status()
 
-        logger.info(f"Successfully updated bookmark {bookmark_id} via API")
+        logger.info("Successfully updated bookmark %s via API", bookmark_id)
         return True

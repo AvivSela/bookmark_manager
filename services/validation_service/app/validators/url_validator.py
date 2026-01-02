@@ -1,9 +1,11 @@
-import httpx
 import logging
-from uuid import UUID
 from datetime import datetime
-from app.schemas.validation import ValidationResult
+from uuid import UUID
+
+import httpx
+
 from app.config import get_settings
+from app.schemas.validation import ValidationResult
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -40,12 +42,12 @@ class URLValidator:
                 timeout=self.timeout, follow_redirects=True, max_redirects=5
             ) as client:
                 # Try HEAD first (lightweight, no body download)
-                logger.info(f"Validating URL {url} for bookmark {bookmark_id}")
+                logger.info("Validating URL %s for bookmark %s", url, bookmark_id)
                 response = await client.head(url, headers=self.headers)
 
                 # Fallback to GET if HEAD not supported (405 Method Not Allowed)
                 if response.status_code == 405:
-                    logger.debug(f"HEAD not supported for {url}, falling back to GET")
+                    logger.debug("HEAD not supported for %s, falling back to GET", url)
                     response = await client.get(url, headers=self.headers)
 
                 # Determine validation status based on HTTP status code
@@ -58,8 +60,10 @@ class URLValidator:
                 final_url = str(response.url) if str(response.url) != url else None
 
                 logger.info(
-                    f"Validation result for {url}: {validation_status} "
-                    f"(HTTP {response.status_code})"
+                    "Validation result for %s: %s (HTTP %s)",
+                    url,
+                    validation_status,
+                    response.status_code,
                 )
 
                 return ValidationResult(
@@ -73,7 +77,7 @@ class URLValidator:
                 )
 
         except httpx.TimeoutException as e:
-            logger.warning(f"Timeout validating {url}: {str(e)}")
+            logger.warning("Timeout validating %s: %s", url, str(e))
             return ValidationResult(
                 bookmark_id=bookmark_id,
                 url=url,
@@ -85,7 +89,7 @@ class URLValidator:
             )
 
         except httpx.NetworkError as e:
-            logger.warning(f"Network error validating {url}: {str(e)}")
+            logger.warning("Network error validating %s: %s", url, str(e))
             return ValidationResult(
                 bookmark_id=bookmark_id,
                 url=url,
@@ -97,7 +101,9 @@ class URLValidator:
             )
 
         except Exception as e:
-            logger.error(f"Unexpected error validating {url}: {str(e)}", exc_info=True)
+            logger.error(
+                "Unexpected error validating %s: %s", url, str(e), exc_info=True
+            )
             return ValidationResult(
                 bookmark_id=bookmark_id,
                 url=url,

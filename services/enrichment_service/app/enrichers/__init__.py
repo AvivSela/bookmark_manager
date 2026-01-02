@@ -1,24 +1,22 @@
 """Enrichment service - organized enricher modules."""
 
 # Import from submodules for backward compatibility
-from app.enrichers.core import (
-    BaseEnricher,
-    EnricherContext,
-    EnricherResult,
-    EnricherRegistry,
-    registry,
-    EnrichmentOrchestrator,
-    ResourceTypeDetector,
-    ResourceDetectorConfig,
-    ResourceType,
-    ResourceTypeInfo,
-    EnrichmentRetryHandler,
-)
-
 from app.enrichers.clients import (
     BookmarkServiceClient,
 )
-
+from app.enrichers.core import (
+    BaseEnricher,
+    EnricherContext,
+    EnricherRegistry,
+    EnricherResult,
+    EnrichmentOrchestrator,
+    EnrichmentRetryHandler,
+    ResourceDetectorConfig,
+    ResourceType,
+    ResourceTypeDetector,
+    ResourceTypeInfo,
+    registry,
+)
 from app.enrichers.implementations import (
     ApiEnricher,
     DatasetEnricher,

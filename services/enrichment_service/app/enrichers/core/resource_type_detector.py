@@ -1,14 +1,13 @@
 """Resource type detection using multiple strategies."""
 
-import re
 import logging
-from typing import Optional, Dict, Pattern
+import re
 from dataclasses import dataclass
-from urllib.parse import urlparse
 from pathlib import Path
+from typing import Dict, Optional, Pattern
+from urllib.parse import urlparse
 
 from app.enrichers.core.resource_types import ResourceType, ResourceTypeInfo
-
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +15,6 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ResourceDetectorConfig:
     """Configuration for resource type detector."""
-
-    pass
 
 
 class ResourceTypeDetector:
@@ -282,7 +279,7 @@ class ResourceTypeDetector:
                     detection_method="file_extension",
                 )
         except Exception as e:
-            logger.debug(f"Error parsing URL extension: {e}")
+            logger.debug("Error parsing URL extension: %s", e)
 
         # No extension matched
         return ResourceTypeInfo(

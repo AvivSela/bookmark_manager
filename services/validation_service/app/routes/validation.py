@@ -1,22 +1,24 @@
 """Validation API endpoints."""
 
-import logging
 import asyncio
-from uuid import UUID
-from fastapi import APIRouter, HTTPException, Header
+import logging
 from typing import Optional
-from app.schemas.validation import (
-    ValidationResultResponse,
-    BatchValidationResponse,
-)
-from app.validators import (
-    URLValidator,
-    ValidationRetryHandler,
-    BookmarkUpdateRetryHandler,
-    BookmarkServiceClient,
-)
+from uuid import UUID
+
+from fastapi import APIRouter, Header, HTTPException
+
 from app.kafka.producer import ValidationEventProducer
 from app.kafka.schemas import ValidationCompletedEvent
+from app.schemas.validation import (
+    BatchValidationResponse,
+    ValidationResultResponse,
+)
+from app.validators import (
+    BookmarkServiceClient,
+    BookmarkUpdateRetryHandler,
+    URLValidator,
+    ValidationRetryHandler,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/validate", tags=["validation"])
@@ -64,7 +66,7 @@ async def validate_bookmark(
             raise HTTPException(status_code=404, detail="Bookmark not found")
 
         url = bookmark["url"]
-        logger.info(f"On-demand validation for bookmark {bookmark_id}: {url}")
+        logger.info("On-demand validation for bookmark %s: %s", bookmark_id, url)
 
         # Validate URL with retry
         validation_result = await ValidationRetryHandler.validate_with_retry(
@@ -77,7 +79,7 @@ async def validate_bookmark(
                 _bookmark_client, bookmark_id, x_user_id, validation_result
             )
         except Exception as e:
-            logger.error(f"Failed to update bookmark {bookmark_id}: {e}")
+            logger.error("Failed to update bookmark %s: %s", bookmark_id, e)
             # Continue even if update fails
 
         # Publish validation event
@@ -100,8 +102,10 @@ async def validate_bookmark(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error validating bookmark {bookmark_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Validation failed: {str(e)}")
+        logger.error("Error validating bookmark %s: %s", bookmark_id, e, exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Validation failed: {str(e)}"
+        ) from e
 
 
 @router.post("/revalidate-all", response_model=BatchValidationResponse)
@@ -134,7 +138,7 @@ async def revalidate_all(
                 success=True, total_processed=0, successful=0, failed=0, results=[]
             )
 
-        logger.info(f"Manual revalidation triggered for {len(bookmarks)} bookmarks")
+        logger.info("Manual revalidation triggered for %s bookmarks", len(bookmarks))
 
         # Process bookmarks with concurrency control
         semaphore = asyncio.Semaphore(10)  # Max 10 concurrent validations
@@ -163,7 +167,7 @@ async def revalidate_all(
                             _bookmark_client, bookmark_id, user_id, validation_result
                         )
                     except Exception as e:
-                        logger.error(f"Failed to update bookmark {bookmark_id}: {e}")
+                        logger.error("Failed to update bookmark %s: %s", bookmark_id, e)
 
                     # Publish event
                     validation_event = ValidationCompletedEvent(
@@ -183,7 +187,7 @@ async def revalidate_all(
 
                 except Exception as e:
                     logger.error(
-                        f"Error validating bookmark {bookmark_data.get('id')}: {e}"
+                        "Error validating bookmark %s: %s", bookmark_data.get("id"), e
                     )
                     failed += 1
                     return None
@@ -205,10 +209,10 @@ async def revalidate_all(
         )
 
     except Exception as e:
-        logger.error(f"Error during batch revalidation: {e}", exc_info=True)
+        logger.error("Error during batch revalidation: %s", e, exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"Batch validation failed: {str(e)}"
-        )
+        ) from e
 
 
 @router.get("/status")

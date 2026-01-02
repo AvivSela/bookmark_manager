@@ -1,16 +1,18 @@
-from fastapi import FastAPI, Request
-from fastapi.exceptions import HTTPException, RequestValidationError
-from contextlib import asynccontextmanager
 import logging
 import uuid
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request
+from fastapi.exceptions import HTTPException, RequestValidationError
+
 from app.config import get_settings
 from app.database import init_db
-from app.routes import bookmarks, health
 from app.kafka import init_kafka, shutdown_kafka
+from app.routes import bookmarks, health
 from app.validation_exception_handler import (
-    validation_exception_handler,
-    http_exception_handler,
     global_exception_handler,
+    http_exception_handler,
+    validation_exception_handler,
 )
 
 settings = get_settings()

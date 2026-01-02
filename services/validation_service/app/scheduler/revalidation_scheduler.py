@@ -1,18 +1,20 @@
 """Periodic revalidation scheduler using APScheduler."""
 
-import logging
 import asyncio
+import logging
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+
 from app.config import get_settings
-from app.validators import (
-    URLValidator,
-    ValidationRetryHandler,
-    BookmarkUpdateRetryHandler,
-    BookmarkServiceClient,
-)
 from app.kafka.producer import ValidationEventProducer
 from app.kafka.schemas import ValidationCompletedEvent
+from app.validators import (
+    BookmarkServiceClient,
+    BookmarkUpdateRetryHandler,
+    URLValidator,
+    ValidationRetryHandler,
+)
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -76,7 +78,7 @@ class RevalidationScheduler:
                 logger.info("No bookmarks need revalidation")
                 return
 
-            logger.info(f"Revalidating {len(bookmarks)} bookmarks...")
+            logger.info("Revalidating %s bookmarks...", len(bookmarks))
 
             # Process bookmarks concurrently (but with a semaphore to limit concurrency)
             semaphore = asyncio.Semaphore(10)  # Max 10 concurrent validations
@@ -90,10 +92,10 @@ class RevalidationScheduler:
                 *[validate_bookmark(b) for b in bookmarks], return_exceptions=True
             )
 
-            logger.info(f"Completed revalidation of {len(bookmarks)} bookmarks")
+            logger.info("Completed revalidation of %s bookmarks", len(bookmarks))
 
         except Exception as e:
-            logger.error(f"Error during periodic revalidation: {e}", exc_info=True)
+            logger.error("Error during periodic revalidation: %s", e, exc_info=True)
 
     async def _validate_single_bookmark(self, bookmark_data: dict):
         """
@@ -107,7 +109,7 @@ class RevalidationScheduler:
             url = bookmark_data["url"]
             user_id = bookmark_data["user_id"]
 
-            logger.debug(f"Revalidating bookmark {bookmark_id}: {url}")
+            logger.debug("Revalidating bookmark %s: %s", bookmark_id, url)
 
             # Step 1: Validate URL with retry
             validation_result = await ValidationRetryHandler.validate_with_retry(
@@ -145,6 +147,8 @@ class RevalidationScheduler:
 
         except Exception as e:
             logger.error(
-                f"Error revalidating bookmark {bookmark_data.get('id', 'unknown')}: {e}",
+                "Error revalidating bookmark %s: %s",
+                bookmark_data.get("id", "unknown"),
+                e,
                 exc_info=True,
             )

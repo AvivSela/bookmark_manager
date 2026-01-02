@@ -1,21 +1,22 @@
 """API enricher - detects and parses OpenAPI/Swagger specifications."""
 
-import time
-import httpx
 import logging
 import re
-import yaml
-from typing import Optional, Dict, Any, List
-from bs4 import BeautifulSoup
+import time
+from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin, urlparse
 
+import httpx
+import yaml
+from bs4 import BeautifulSoup
+
+from app.config import get_settings
 from app.enrichers.core.base_enricher import (
     BaseEnricher,
     EnricherContext,
     EnricherResult,
 )
 from app.enrichers.core.resource_types import ResourceType
-from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -77,7 +78,7 @@ class ApiEnricher(BaseEnricher):
 
         except Exception as e:
             execution_time = (time.time() - start_time) * 1000
-            self.logger.error(f"Failed to enrich API {context.url}: {e}")
+            self.logger.error("Failed to enrich API %s: %s", context.url, e)
 
             return EnricherResult(
                 enricher=self,
@@ -121,15 +122,15 @@ class ApiEnricher(BaseEnricher):
                                 "application/x-yaml",
                             ]
                         ):
-                            self.logger.info(f"Found OpenAPI spec at {spec_url}")
+                            self.logger.info("Found OpenAPI spec at %s", spec_url)
                             return spec_url
 
                 except Exception as e:
                     # Continue trying other paths
-                    self.logger.debug(f"Failed to check {spec_url}: {e}")
+                    self.logger.debug("Failed to check %s: %s", spec_url, e)
                     continue
 
-        self.logger.info(f"No OpenAPI spec found for {url}")
+        self.logger.info("No OpenAPI spec found for %s", url)
         return None
 
     async def _fetch_spec(self, spec_url: str) -> Optional[Dict[str, Any]]:
@@ -157,11 +158,10 @@ class ApiEnricher(BaseEnricher):
                 # Parse YAML or JSON based on content type or URL
                 if "yaml" in content_type or spec_url.endswith((".yaml", ".yml")):
                     return yaml.safe_load(response.text)
-                else:
-                    return response.json()
+                return response.json()
 
         except Exception as e:
-            self.logger.warning(f"Failed to fetch/parse spec from {spec_url}: {e}")
+            self.logger.warning("Failed to fetch/parse spec from %s: %s", spec_url, e)
             return None
 
     def _parse_openapi_spec(self, spec: Dict[str, Any]) -> Dict[str, Any]:
@@ -228,7 +228,7 @@ class ApiEnricher(BaseEnricher):
                     metadata["tags"] = tag_names
 
         except Exception as e:
-            self.logger.warning(f"Error parsing OpenAPI spec: {e}")
+            self.logger.warning("Error parsing OpenAPI spec: %s", e)
 
         return metadata
 
@@ -262,7 +262,7 @@ class ApiEnricher(BaseEnricher):
             auth_methods = list(set(auth_methods))
 
         except Exception as e:
-            self.logger.warning(f"Error extracting auth methods: {e}")
+            self.logger.warning("Error extracting auth methods: %s", e)
 
         return auth_methods
 
@@ -317,7 +317,7 @@ class ApiEnricher(BaseEnricher):
                     metadata["description"] = meta_desc["content"]
 
         except Exception as e:
-            self.logger.warning(f"HTML scraping failed for {url}: {e}")
+            self.logger.warning("HTML scraping failed for %s: %s", url, e)
 
         return metadata
 

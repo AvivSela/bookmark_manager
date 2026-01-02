@@ -1,13 +1,13 @@
 """Tests for ImageEnricher."""
 
-import pytest
-import httpx
 import io
-from PIL import Image
 
-from app.enrichers.implementations.image_enricher import ImageEnricher
+import httpx
+import pytest
 from app.enrichers.core.base_enricher import EnricherContext
 from app.enrichers.core.resource_types import ResourceType
+from app.enrichers.implementations.image_enricher import ImageEnricher
+from PIL import Image
 
 
 @pytest.fixture

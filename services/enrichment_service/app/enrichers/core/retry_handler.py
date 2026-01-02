@@ -1,12 +1,14 @@
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_random_exponential,
-    retry_if_exception_type,
-)
-import httpx
 import logging
 from uuid import UUID
+
+import httpx
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_random_exponential,
+)
+
 from app.config import get_settings
 from app.enrichers.core.enrichment_orchestrator import EnrichmentOrchestrator
 
@@ -76,7 +78,7 @@ class EnrichmentRetryHandler:
                 )
                 raise
             # Retry 5xx errors
-            logger.warning(f"Retrying after HTTP {e.response.status_code} for {url}")
+            logger.warning("Retrying after HTTP %s for %s", e.response.status_code, url)
             raise
 
     @retry(

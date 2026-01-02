@@ -1,11 +1,10 @@
 """Central registry for enricher discovery and management."""
 
 import logging
-from typing import Dict, Type, List
+from typing import Dict, List, Type
 
 from app.enrichers.core.base_enricher import BaseEnricher
 from app.enrichers.core.resource_types import ResourceType
-
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +35,11 @@ class EnricherRegistry:
             temp_instance = enricher_class()
             name = temp_instance.name
             self._enrichers[name] = enricher_class
-            logger.info(f"Registered enricher: {name}")
+            logger.info("Registered enricher: %s", name)
         except Exception as e:
-            logger.error(f"Failed to register enricher {enricher_class.__name__}: {e}")
+            logger.error(
+                "Failed to register enricher %s: %s", enricher_class.__name__, e
+            )
             raise
 
         return enricher_class
@@ -102,7 +103,7 @@ class EnricherRegistry:
                         f"Enricher '{name}' is not applicable for type {resource_type}"
                     )
             except Exception as e:
-                logger.error(f"Failed to instantiate enricher '{name}': {e}")
+                logger.error("Failed to instantiate enricher '%s': %s", name, e)
 
         return enrichers
 

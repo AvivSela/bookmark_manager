@@ -1,17 +1,19 @@
 """Kafka consumer for bookmark.created events."""
 
+import asyncio
 import json
 import logging
-import asyncio
+
 from aiokafka import AIOKafkaConsumer
+
 from app.config import get_settings
-from app.kafka.schemas import BookmarkCreatedEvent, ValidationCompletedEvent
 from app.kafka.producer import ValidationEventProducer
+from app.kafka.schemas import BookmarkCreatedEvent, ValidationCompletedEvent
 from app.validators import (
+    BookmarkServiceClient,
+    BookmarkUpdateRetryHandler,
     URLValidator,
     ValidationRetryHandler,
-    BookmarkUpdateRetryHandler,
-    BookmarkServiceClient,
 )
 
 logger = logging.getLogger(__name__)
@@ -46,12 +48,13 @@ class BookmarkConsumer:
             )
             await self.consumer.start()
             logger.info(
-                f"Kafka consumer started for topic: {self.topic}, "
-                f"group: {self.group_id}"
+                "Kafka consumer started for topic: %s, group: %s",
+                self.topic,
+                self.group_id,
             )
             self.running = True
         except Exception as e:
-            logger.error(f"Failed to start Kafka consumer: {e}")
+            logger.error("Failed to start Kafka consumer: %s", e)
             raise
 
     async def stop(self):
@@ -62,7 +65,7 @@ class BookmarkConsumer:
                 await self.consumer.stop()
                 logger.info("Kafka consumer stopped")
             except Exception as e:
-                logger.error(f"Error stopping Kafka consumer: {e}")
+                logger.error("Error stopping Kafka consumer: %s", e)
 
     async def consume(self):
         """
@@ -86,8 +89,9 @@ class BookmarkConsumer:
                     event = BookmarkCreatedEvent(**event_data)
 
                     logger.info(
-                        f"Received bookmark.created event: "
-                        f"bookmark_id={event.bookmark_id}, url={event.url}"
+                        "Received bookmark.created event: bookmark_id=%s, url=%s",
+                        event.bookmark_id,
+                        event.url,
                     )
 
                     # Process the event
@@ -95,14 +99,14 @@ class BookmarkConsumer:
 
                 except Exception as e:
                     logger.error(
-                        f"Error processing message from Kafka: {e}", exc_info=True
+                        "Error processing message from Kafka: %s", e, exc_info=True
                     )
                     # Continue processing other messages
 
         except asyncio.CancelledError:
             logger.info("Consumer cancelled, shutting down...")
         except Exception as e:
-            logger.error(f"Fatal error in consumer loop: {e}", exc_info=True)
+            logger.error("Fatal error in consumer loop: %s", e, exc_info=True)
             raise
 
     async def _process_bookmark_event(self, event: BookmarkCreatedEvent):
@@ -114,16 +118,19 @@ class BookmarkConsumer:
         """
         try:
             # Step 1: Validate URL with retry
-            logger.info(f"Validating URL for bookmark {event.bookmark_id}: {event.url}")
+            logger.info(
+                "Validating URL for bookmark %s: %s", event.bookmark_id, event.url
+            )
 
             validation_result = await ValidationRetryHandler.validate_with_retry(
                 self.validator, event.bookmark_id, event.url
             )
 
             logger.info(
-                f"Validation completed for bookmark {event.bookmark_id}: "
-                f"status={validation_result.validation_status}, "
-                f"http_status={validation_result.http_status}"
+                "Validation completed for bookmark %s: status=%s, http_status=%s",
+                event.bookmark_id,
+                validation_result.validation_status,
+                validation_result.http_status,
             )
 
             # Step 2: Update bookmark via API with retry
@@ -134,11 +141,13 @@ class BookmarkConsumer:
                     str(event.user_id),
                     validation_result,
                 )
-                logger.info(f"Updated bookmark {event.bookmark_id} via API")
+                logger.info("Updated bookmark %s via API", event.bookmark_id)
 
             except Exception as e:
                 logger.error(
-                    f"Failed to update bookmark {event.bookmark_id} after retries: {e}"
+                    "Failed to update bookmark %s after retries: %s",
+                    event.bookmark_id,
+                    e,
                 )
                 # Continue to publish event even if update fails
 
@@ -156,13 +165,16 @@ class BookmarkConsumer:
             await self.producer.publish_validation_event(validation_event)
 
             logger.info(
-                f"Successfully processed bookmark {event.bookmark_id}: "
-                f"{validation_result.validation_status}"
+                "Successfully processed bookmark %s: %s",
+                event.bookmark_id,
+                validation_result.validation_status,
             )
 
         except Exception as e:
             logger.error(
-                f"Error processing bookmark event {event.bookmark_id}: {e}",
+                "Error processing bookmark event %s: %s",
+                event.bookmark_id,
+                e,
                 exc_info=True,
             )
             raise

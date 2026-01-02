@@ -1,8 +1,9 @@
-from pydantic import BaseModel, Field, ConfigDict
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict
-from datetime import datetime, timezone
 from uuid import UUID, uuid4
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class BookmarkEventType(str, Enum):

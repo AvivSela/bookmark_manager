@@ -2,15 +2,18 @@
 
 import asyncio
 import logging
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
-from app.enrichers.core.base_enricher import BaseEnricher, EnricherContext, EnricherResult
-from app.enrichers.core.resource_type_detector import ResourceTypeDetector
+from app.enrichers.core.base_enricher import (
+    BaseEnricher,
+    EnricherContext,
+    EnricherResult,
+)
 from app.enrichers.core.enricher_registry import registry
+from app.enrichers.core.resource_type_detector import ResourceTypeDetector
+from app.enrichers.core.resource_types import ResourceType
 from app.enrichers.implementations.webpage_enricher import WebPageEnricher
 from app.schemas.enrichment import EnrichmentResult
-from app.enrichers.core.resource_types import ResourceType
-
 
 logger = logging.getLogger(__name__)
 

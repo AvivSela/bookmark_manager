@@ -1,12 +1,14 @@
-import httpx
 import logging
+
+import httpx
 from tenacity import (
+    before_sleep_log,
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
-    before_sleep_log,
 )
+
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -62,7 +64,7 @@ class BookmarkUpdateRetryHandler:
         wait=wait_exponential(multiplier=2.0, min=1.0, max=60.0),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         retry_error_callback=lambda retry_state: logger.error(
-            f"Failed to update bookmark after {retry_state.attempt_number} attempts"
+            "Failed to update bookmark after %s attempts", retry_state.attempt_number
         ),
     )
     async def update_with_retry(client, bookmark_id, user_id, validation_result):

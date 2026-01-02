@@ -1,11 +1,10 @@
 """Tests for DatasetEnricher."""
 
-import pytest
 import httpx
-
-from app.enrichers.implementations.dataset_enricher import DatasetEnricher
+import pytest
 from app.enrichers.core.base_enricher import EnricherContext
 from app.enrichers.core.resource_types import ResourceType
+from app.enrichers.implementations.dataset_enricher import DatasetEnricher
 
 
 @pytest.fixture

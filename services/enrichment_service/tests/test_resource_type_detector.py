@@ -1,10 +1,9 @@
 """Tests for ResourceTypeDetector."""
 
 import pytest
-
 from app.enrichers.core.resource_type_detector import (
-    ResourceTypeDetector,
     ResourceDetectorConfig,
+    ResourceTypeDetector,
 )
 from app.enrichers.core.resource_types import ResourceType
 

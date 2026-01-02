@@ -1,9 +1,11 @@
-import httpx
 import logging
+from typing import Any, Dict, List, Optional
 from uuid import UUID
-from typing import Optional, List, Dict, Any
-from app.schemas.validation import ValidationResult
+
+import httpx
+
 from app.config import get_settings
+from app.schemas.validation import ValidationResult
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -48,7 +50,7 @@ class BookmarkServiceClient:
         if user_id:
             headers["X-User-ID"] = user_id
 
-        logger.info(f"Fetching bookmarks from {url} with params {params}")
+        logger.info("Fetching bookmarks from %s with params %s", url, params)
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             response = await client.get(url, params=params, headers=headers)
@@ -57,7 +59,7 @@ class BookmarkServiceClient:
             data = response.json()
             bookmarks = data.get("bookmarks", [])
 
-            logger.info(f"Retrieved {len(bookmarks)} bookmarks from bookmark service")
+            logger.info("Retrieved %s bookmarks from bookmark service", len(bookmarks))
             return bookmarks
 
     async def get_bookmark(
@@ -81,20 +83,20 @@ class BookmarkServiceClient:
         url = f"{self.base_url}/bookmarks/{bookmark_id}"
         headers = {"X-User-ID": user_id}
 
-        logger.info(f"Fetching bookmark {bookmark_id} from {url}")
+        logger.info("Fetching bookmark %s from %s", bookmark_id, url)
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             response = await client.get(url, headers=headers)
 
             # Return None for 404, raise for other errors
             if response.status_code == 404:
-                logger.warning(f"Bookmark {bookmark_id} not found")
+                logger.warning("Bookmark %s not found", bookmark_id)
                 return None
 
             response.raise_for_status()
 
             bookmark = response.json()
-            logger.info(f"Retrieved bookmark {bookmark_id}")
+            logger.info("Retrieved bookmark %s", bookmark_id)
             return bookmark
 
     async def update_bookmark_validation(
@@ -129,9 +131,10 @@ class BookmarkServiceClient:
         }
 
         logger.info(
-            f"Updating bookmark {bookmark_id} validation: "
-            f"status={validation_result.validation_status}, "
-            f"http_status={validation_result.http_status}"
+            "Updating bookmark %s validation: status=%s, http_status=%s",
+            bookmark_id,
+            validation_result.validation_status,
+            validation_result.http_status,
         )
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -139,5 +142,5 @@ class BookmarkServiceClient:
             response.raise_for_status()
 
             updated_bookmark = response.json()
-            logger.info(f"Successfully updated bookmark {bookmark_id}")
+            logger.info("Successfully updated bookmark %s", bookmark_id)
             return updated_bookmark

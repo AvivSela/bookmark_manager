@@ -1,20 +1,21 @@
 """Dataset enricher - extracts dataset metadata without downloading files."""
 
-import time
-import httpx
 import logging
 import re
-from typing import Optional, Dict, Any
-from bs4 import BeautifulSoup
+import time
+from typing import Any, Dict, Optional
 from urllib.parse import urlparse
 
+import httpx
+from bs4 import BeautifulSoup
+
+from app.config import get_settings
 from app.enrichers.core.base_enricher import (
     BaseEnricher,
     EnricherContext,
     EnricherResult,
 )
 from app.enrichers.core.resource_types import ResourceType
-from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -113,7 +114,7 @@ class DatasetEnricher(BaseEnricher):
 
         except Exception as e:
             execution_time = (time.time() - start_time) * 1000
-            self.logger.error(f"Failed to enrich dataset {context.url}: {e}")
+            self.logger.error("Failed to enrich dataset %s: %s", context.url, e)
 
             return EnricherResult(
                 enricher=self,
@@ -259,7 +260,7 @@ class DatasetEnricher(BaseEnricher):
                         metadata["filename"] = filename_match.group(1)
 
         except Exception as e:
-            self.logger.warning(f"Generic metadata extraction failed: {e}")
+            self.logger.warning("Generic metadata extraction failed: %s", e)
 
         return metadata
 

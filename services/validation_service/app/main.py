@@ -4,15 +4,16 @@ import asyncio
 import logging
 import signal
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+
 import uvicorn
+from fastapi import FastAPI
 
 from app.config import get_settings
-from app.kafka import ValidationEventProducer, BookmarkConsumer
-from app.scheduler import RevalidationScheduler
-from app.validators import URLValidator, BookmarkServiceClient
+from app.kafka import BookmarkConsumer, ValidationEventProducer
 from app.routes import health_router, validation_router
 from app.routes.validation import set_dependencies
+from app.scheduler import RevalidationScheduler
+from app.validators import BookmarkServiceClient, URLValidator
 
 # Configure logging
 logging.basicConfig(
@@ -132,7 +133,7 @@ async def root():
 
 def handle_shutdown_signal(signum, frame):
     """Handle shutdown signals gracefully."""
-    logger.info(f"Received signal {signum}, initiating graceful shutdown...")
+    logger.info("Received signal %s, initiating graceful shutdown...", signum)
     # FastAPI/uvicorn will handle the actual shutdown via lifespan
 
 

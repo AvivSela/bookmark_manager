@@ -7,6 +7,7 @@ Provides Kafka producer for publishing bookmark events
 
 import logging
 from typing import Optional
+
 from app.kafka.producer import KafkaEventProducer
 from app.kafka.schemas import BookmarkEvent, BookmarkEventType
 

@@ -1,20 +1,22 @@
+import uuid
+from typing import Any, Optional
+
 from sqlalchemy import (
+    CHAR,
+    JSON,
     Column,
+    DateTime,
+    Index,
+    Integer,
     String,
     Text,
-    DateTime,
-    Integer,
-    Index,
     TypeDecorator,
-    CHAR,
     UniqueConstraint,
-    JSON,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.engine import Dialect
 from sqlalchemy.sql import func
-from typing import Optional, Any
-import uuid
+
 from app.database import Base
 
 
@@ -39,8 +41,7 @@ class GUID(TypeDecorator):
         """
         if dialect.name == "postgresql":
             return dialect.type_descriptor(PG_UUID(as_uuid=True))
-        else:
-            return dialect.type_descriptor(CHAR(36))
+        return dialect.type_descriptor(CHAR(36))
 
     def process_bind_param(
         self, value: Optional[uuid.UUID | str], dialect: Dialect
@@ -56,13 +57,11 @@ class GUID(TypeDecorator):
         """
         if value is None:
             return value
-        elif dialect.name == "postgresql":
+        if dialect.name == "postgresql":
             return value
-        else:
-            if not isinstance(value, uuid.UUID):
-                return str(uuid.UUID(value))
-            else:
-                return str(value)
+        if not isinstance(value, uuid.UUID):
+            return str(uuid.UUID(value))
+        return str(value)
 
     def process_result_value(
         self, value: Optional[str | uuid.UUID], dialect: Dialect
@@ -78,11 +77,9 @@ class GUID(TypeDecorator):
         """
         if value is None:
             return value
-        else:
-            if not isinstance(value, uuid.UUID):
-                return uuid.UUID(value)
-            else:
-                return value
+        if not isinstance(value, uuid.UUID):
+            return uuid.UUID(value)
+        return value
 
 
 class Bookmark(Base):

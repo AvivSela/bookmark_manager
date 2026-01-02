@@ -3,7 +3,9 @@
 import json
 import logging
 from typing import Optional
+
 from aiokafka import AIOKafkaProducer
+
 from app.config import get_settings
 from app.kafka.schemas import ValidationCompletedEvent
 
@@ -28,9 +30,9 @@ class ValidationEventProducer:
                 compression_type="gzip",
             )
             await self.producer.start()
-            logger.info(f"Kafka producer started for topic: {self.topic}")
+            logger.info("Kafka producer started for topic: %s", self.topic)
         except Exception as e:
-            logger.error(f"Failed to start Kafka producer: {e}")
+            logger.error("Failed to start Kafka producer: %s", e)
             raise
 
     async def stop(self):
@@ -40,7 +42,7 @@ class ValidationEventProducer:
                 await self.producer.stop()
                 logger.info("Kafka producer stopped")
             except Exception as e:
-                logger.error(f"Error stopping Kafka producer: {e}")
+                logger.error("Error stopping Kafka producer: %s", e)
 
     async def publish_validation_event(self, event: ValidationCompletedEvent):
         """
@@ -67,12 +69,16 @@ class ValidationEventProducer:
             )
 
             logger.info(
-                f"Published validation event for bookmark {event.bookmark_id}: "
-                f"status={event.validation_status}, http_status={event.validation_http_status}"
+                "Published validation event for bookmark %s: status=%s, http_status=%s",
+                event.bookmark_id,
+                event.validation_status,
+                event.validation_http_status,
             )
 
         except Exception as e:
             logger.error(
-                f"Failed to publish validation event for bookmark {event.bookmark_id}: {e}"
+                "Failed to publish validation event for bookmark %s: %s",
+                event.bookmark_id,
+                e,
             )
             raise

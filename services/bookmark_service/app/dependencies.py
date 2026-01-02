@@ -1,6 +1,7 @@
-from fastapi import Header, HTTPException, status
-from typing import Annotated
 import re
+from typing import Annotated
+
+from fastapi import Header, HTTPException, status
 
 TENANT_ID_PATTERN = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE

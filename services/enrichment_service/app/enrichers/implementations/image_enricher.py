@@ -1,19 +1,20 @@
 """Image enricher - extracts basic image metadata with minimal bandwidth usage."""
 
-import time
-import httpx
-import logging
 import io
-from typing import Optional, Dict, Any
+import logging
+import time
+from typing import Any, Dict, Optional
+
+import httpx
 from PIL import Image
 
+from app.config import get_settings
 from app.enrichers.core.base_enricher import (
     BaseEnricher,
     EnricherContext,
     EnricherResult,
 )
 from app.enrichers.core.resource_types import ResourceType
-from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -24,9 +25,6 @@ class ImageEnricher(BaseEnricher):
 
     # Maximum header size to fetch (enough for most image headers)
     MAX_HEADER_SIZE = settings.image_max_header_size
-
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        super().__init__(config)
 
     async def enrich(self, context: EnricherContext) -> EnricherResult:
         """
@@ -83,7 +81,7 @@ class ImageEnricher(BaseEnricher):
 
         except Exception as e:
             execution_time = (time.time() - start_time) * 1000
-            self.logger.error(f"Failed to enrich image {context.url}: {e}")
+            self.logger.error("Failed to enrich image %s: %s", context.url, e)
 
             return EnricherResult(
                 enricher=self,

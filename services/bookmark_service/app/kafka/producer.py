@@ -1,8 +1,10 @@
-import logging
 import json
-from typing import Dict, Any, Optional
+import logging
+from typing import Any, Dict, Optional
+
 from aiokafka import AIOKafkaProducer
 from aiokafka.errors import KafkaError, KafkaTimeoutError
+
 from app.kafka.schemas import BookmarkEvent
 
 logger = logging.getLogger(__name__)

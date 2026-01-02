@@ -1,11 +1,11 @@
 """Base enricher interface and data structures."""
 
-from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any
-from dataclasses import dataclass
-import logging
 import asyncio
+import logging
 import time
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
 
 from app.enrichers.core.resource_types import ResourceType
 
@@ -64,7 +64,9 @@ class BaseEnricher(ABC):
 
         except asyncio.TimeoutError:
             execution_time = (time.time() - start_time) * 1000
-            self.logger.error(f"Enricher {self.name} timed out after {self.timeout}s")
+            self.logger.error(
+                "Enricher %s timed out after %ss", self.name, self.timeout
+            )
             return EnricherResult(
                 enricher=self,
                 success=False,
@@ -75,7 +77,9 @@ class BaseEnricher(ABC):
 
         except Exception as e:
             execution_time = (time.time() - start_time) * 1000
-            self.logger.error(f"Enricher {self.name} raised exception: {e}", exc_info=e)
+            self.logger.error(
+                "Enricher %s raised exception: %s", self.name, e, exc_info=e
+            )
             return EnricherResult(
                 enricher=self,
                 success=False,
@@ -97,7 +101,6 @@ class BaseEnricher(ABC):
         Returns:
             EnricherResult with extracted data or error
         """
-        pass
 
     @abstractmethod
     def is_applicable(self, resource_type: ResourceType) -> bool:
@@ -110,13 +113,11 @@ class BaseEnricher(ABC):
         Returns:
             True if enricher should run for this type
         """
-        pass
 
     @property
     @abstractmethod
     def name(self) -> str:
         """Unique name for this enricher."""
-        pass
 
     @property
     def timeout(self) -> float:

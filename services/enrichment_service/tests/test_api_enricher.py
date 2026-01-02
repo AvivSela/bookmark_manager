@@ -1,11 +1,10 @@
 """Tests for ApiEnricher."""
 
-import pytest
 import httpx
-
-from app.enrichers.implementations.api_enricher import ApiEnricher
+import pytest
 from app.enrichers.core.base_enricher import EnricherContext
 from app.enrichers.core.resource_types import ResourceType
+from app.enrichers.implementations.api_enricher import ApiEnricher
 
 
 @pytest.fixture

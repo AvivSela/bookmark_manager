@@ -1,7 +1,8 @@
-import pytest
-import httpx
-import respx
 from uuid import uuid4
+
+import httpx
+import pytest
+import respx
 from app.enrichers.clients.bookmark_service_client import BookmarkServiceClient
 
 

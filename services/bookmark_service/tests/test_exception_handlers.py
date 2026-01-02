@@ -1,6 +1,7 @@
-import pytest
-from httpx import AsyncClient, ASGITransport
 from unittest.mock import patch
+
+import pytest
+from httpx import ASGITransport, AsyncClient
 
 
 class TestHTTPExceptionHandler:

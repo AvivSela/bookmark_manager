@@ -1,13 +1,14 @@
+from datetime import datetime
+from typing import Any, Dict, Optional
+from uuid import UUID
+
 from pydantic import (
     BaseModel,
-    HttpUrl,
-    Field,
     ConfigDict,
+    Field,
+    HttpUrl,
     field_validator,
 )
-from datetime import datetime
-from uuid import UUID
-from typing import Optional, Dict, Any
 
 
 class BookmarkBase(BaseModel):
