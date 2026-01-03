@@ -1,0 +1,78 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Kubernetes pod logs via kubectl logs streaming
+  # This configuration reads from K8s API to collect pod logs
+  - job_name: kubernetes-pods
+    kubernetes_sd_configs:
+      - role: pod
+        # Connect to K8s API server on host
+        api_server: https://host.docker.internal:6443
+        # Use service account token from mounted volume
+        # You'll need to mount ~/.kube/config or create a service account
+        tls_config:
+          insecure_skip_verify: true
+        # Alternatively, use kubeconfig
+        kubeconfig_file: /kubeconfig/config
+
+    pipeline_stages:
+      # Parse JSON logs
+      - json:
+          expressions:
+            timestamp: timestamp
+            level: level
+            service: service
+            logger: logger
+            message: message
+            request_id: request_id
+            tenant_id: tenant_id
+            bookmark_id: bookmark_id
+
+      # Extract labels from JSON
+      - labels:
+          level:
+          service:
+          request_id:
+          tenant_id:
+          bookmark_id:
+
+      # Set timestamp
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+
+      # Output the message
+      - output:
+          source: message
+
+    relabel_configs:
+      # Only scrape pods with specific labels (bookmark services)
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        regex: bookmark-service|enrichment-service|validation-service
+        action: keep
+
+      # Add pod name as label
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+
+      # Add namespace as label
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+
+      # Add container name as label
+      - source_labels: [__meta_kubernetes_pod_container_name]
+        target_label: container
+
+      # Use pod log path
+      - source_labels: [__meta_kubernetes_pod_uid, __meta_kubernetes_pod_container_name]
+        target_label: __path__
+        separator: /
+        replacement: /var/log/pods/*$1/*.log

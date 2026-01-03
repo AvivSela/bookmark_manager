@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: bookmark-service
+  name: bookmark-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bookmark
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: bookmark
+    spec:
+      containers:
+      - env:
+        - name: DEBUG
+          value: "false"
+        - name: ENABLE_METRICS
+          value: "true"
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: 172.19.0.3:9092
+        - name: KAFKA_COMPRESSION_TYPE
+          value: gzip
+        - name: KAFKA_ENABLED
+          value: "true"
+        - name: KAFKA_MAX_RETRIES
+          value: "3"
+        - name: KAFKA_REQUEST_TIMEOUT_MS
+          value: "30000"
+        - name: KAFKA_TOPIC_PREFIX
+          value: bookmarks
+        - name: POSTGRES_DB
+          value: bookmark_db
+        - name: POSTGRES_HOST
+          value: 172.17.0.1
+        - name: POSTGRES_PASSWORD
+          value: bookmark_pass
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_USER
+          value: bookmark_user
+        image: bookmark-service:latest
+        imagePullPolicy: Never
+        livenessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - import urllib.request; urllib.request.urlopen('http://localhost:8000/health')
+          failureThreshold: 3
+          periodSeconds: 30
+          timeoutSeconds: 10
+        name: bookmark-service
+        ports:
+        - containerPort: 8000
+        resources: {}
+      restartPolicy: Always

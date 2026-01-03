@@ -6,14 +6,13 @@ import uvicorn
 
 from app.config import get_settings
 from app.consumers.bookmark_consumer import BookmarkEnrichmentConsumer
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+from app.logging_config import setup_json_logging
 
 settings = get_settings()
+
+# Setup structured JSON logging
+setup_json_logging(service_name="enrichment-service", log_level="INFO")
+logger = logging.getLogger(__name__)
 
 
 class EnrichmentService:

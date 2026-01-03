@@ -26,38 +26,6 @@ A Kafka consumer service that automatically validates bookmark URLs to ensure th
 
 ## How It Works
 
-### Architecture
-
-```
-┌─────────────────┐                    ┌──────────────────────────────────────┐
-│  Bookmark API   │──── Kafka Event ───>│     Validation Service (8002)        │
-│  (Port 8000)    │   bookmark.created │                                      │
-└─────────────────┘                    │  ┌────────────────────────────────┐  │
-                                       │  │  Bookmark Consumer             │  │
-                                       │  └──────────┬─────────────────────┘  │
-                                       │             │                        │
-                                       │  ┌──────────▼─────────────────────┐  │
-                                       │  │  URL Validator                 │  │
-                                       │  │  (HEAD/GET with retry logic)   │  │
-                                       │  └──────────┬─────────────────────┘  │
-                                       │             │                        │
-                                       │  ┌──────────▼─────────────────────┐  │
-                                       │  │  Validation Event Producer     │  │
-                                       │  │  (Publish to Kafka)            │  │
-                                       │  └──────────┬─────────────────────┘  │
-                                       │             │                        │
-                                       │  ┌──────────▼─────────────────────┐  │
-                                       │  │  Bookmark Service Client       │  │
-                                       │  │  (PATCH /bookmarks/{id})       │  │
-                                       │  └────────────────────────────────┘  │
-                                       │                                      │
-                                       │  ┌────────────────────────────────┐  │
-                                       │  │  Revalidation Scheduler        │  │
-                                       │  │  (Optional, runs periodically) │  │
-                                       │  └────────────────────────────────┘  │
-                                       └──────────────────────────────────────┘
-```
-
 ### Event Flow
 
 1. **Bookmark Created**: User creates a bookmark via Bookmark API
@@ -110,66 +78,6 @@ Configuration is managed through environment variables defined in [app/config.py
 | `BOOKMARK_SERVICE_PORT` | Bookmark service port | `8000` |
 | `BOOKMARK_SERVICE_TIMEOUT_SECONDS` | API request timeout | `10` |
 
-## Quick Start
-
-### Running with Docker Compose
-
-From the project root:
-
-```bash
-docker compose up validation-service
-```
-
-The service will:
-- Start consuming Kafka events automatically
-- Expose health check at `http://localhost:8002/health`
-- Expose validation API at `http://localhost:8002/validation`
-
-### Running Locally (Development)
-
-1. **Set up Python environment**:
-
-```bash
-cd services/validation_service
-
-# Create virtual environment with uv
-uv venv
-source .venv/bin/activate
-
-# Install dependencies
-uv pip install -r requirements.txt
-```
-
-2. **Set up environment variables**:
-
-```bash
-# Copy and edit the example env file
-cp ../../.env.example ../../.env
-
-# Or set variables directly
-export KAFKA_BOOTSTRAP_SERVERS=localhost:9092
-export KAFKA_TOPIC=bookmarks.bookmark.created
-export BOOKMARK_SERVICE_HOST=localhost
-export BOOKMARK_SERVICE_PORT=8000
-```
-
-3. **Ensure dependencies are running**:
-
-```bash
-# Start Kafka and Bookmark Service
-docker compose up kafka bookmark-service -d
-```
-
-4. **Run the service**:
-
-```bash
-python -m app.main
-```
-
-The service will start both:
-- Kafka consumer (background)
-- FastAPI API endpoint at `http://localhost:8002`
-
 ## Validation Data
 
 The service validates URLs and stores the following metadata:
@@ -201,19 +109,6 @@ The test suite uses pytest with async support.
 
 ```bash
 ./run_tests.sh
-```
-
-### Run specific test files
-
-```bash
-# Test URL validator
-.venv/bin/pytest tests/test_url_validator.py -v
-
-# Test bookmark consumer
-.venv/bin/pytest tests/test_bookmark_consumer.py -v
-
-# Test validation routes
-.venv/bin/pytest tests/test_validation.py -v
 ```
 
 ## API Endpoints

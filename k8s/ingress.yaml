@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bookmark-api-gateway
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: bookmark.test
+    http:
+      paths:
+      - path: /api/v1/bookmarks
+        pathType: Prefix
+        backend:
+          service:
+            name: bookmark-service
+            port:
+              number: 80
+
+      - path: /api/v1/enrichment
+        pathType: Prefix
+        backend:
+          service:
+            name: enrichment-service
+            port:
+              number: 8001
+
+      - path: /api/v1/validation
+        pathType: Prefix
+        backend:
+          service:
+            name: validation-service
+            port:
+              number: 8002

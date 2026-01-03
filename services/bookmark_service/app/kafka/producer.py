@@ -6,6 +6,7 @@ from aiokafka import AIOKafkaProducer  # type: ignore[import-untyped]
 from aiokafka.errors import KafkaError, KafkaTimeoutError  # type: ignore[import-untyped]
 
 from app.kafka.schemas import BookmarkEvent
+from app.metrics import record_kafka_event
 
 logger = logging.getLogger(__name__)
 
@@ -160,6 +161,9 @@ class KafkaEventProducer:
                 topic=topic, value=event.to_json_dict(), key=partition_key_bytes
             )
 
+            # Record success metric
+            record_kafka_event(event_type=f"bookmark.{event_type}", status="success")
+
             logger.info(
                 "Published Kafka event successfully",
                 extra={
@@ -173,6 +177,9 @@ class KafkaEventProducer:
             return True
 
         except KafkaTimeoutError as e:
+            # Record error metric
+            record_kafka_event(event_type=f"bookmark.{event_type}", status="error")
+
             logger.error(
                 "Kafka timeout - broker unreachable or slow",
                 extra={
@@ -187,6 +194,9 @@ class KafkaEventProducer:
             return False
 
         except KafkaError as e:
+            # Record error metric
+            record_kafka_event(event_type=f"bookmark.{event_type}", status="error")
+
             logger.error(
                 "Kafka error during event publish",
                 extra={
@@ -201,6 +211,9 @@ class KafkaEventProducer:
             return False
 
         except Exception as e:
+            # Record error metric
+            record_kafka_event(event_type=f"bookmark.{event_type}", status="error")
+
             logger.exception(
                 "Unexpected error publishing Kafka event",
                 extra={

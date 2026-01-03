@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import uuid
 from contextlib import asynccontextmanager
@@ -8,6 +9,8 @@ from fastapi.exceptions import HTTPException, RequestValidationError
 from app.config import get_settings
 from app.database import init_db
 from app.kafka import init_kafka, shutdown_kafka
+from app.logging_config import setup_json_logging
+from app.metrics import collect_db_pool_metrics, setup_metrics
 from app.routes import bookmarks, health
 from app.validation_exception_handler import (
     global_exception_handler,
@@ -16,17 +19,50 @@ from app.validation_exception_handler import (
 )
 
 settings = get_settings()
+
+# Setup structured JSON logging
+setup_json_logging(service_name="bookmark-service", log_level="INFO")
 logger = logging.getLogger(__name__)
+
+# Background task for metrics collection
+_metrics_task = None
+
+
+async def collect_metrics_periodically():
+    """Collect database pool metrics every 15 seconds."""
+    while True:
+        try:
+            await collect_db_pool_metrics()
+            await asyncio.sleep(15)
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            logger.error("Error collecting metrics: %s", e, exc_info=True)
+            await asyncio.sleep(15)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager - runs on startup and shutdown."""
+    global _metrics_task
+
     # Initialize database and Kafka
     await init_db()
     await init_kafka()
+
+    # Start metrics collection task
+    _metrics_task = asyncio.create_task(collect_metrics_periodically())
+
     yield
-    # Shutdown: Cleanup Kafka producer
+
+    # Shutdown: Stop metrics collection and cleanup
+    if _metrics_task:
+        _metrics_task.cancel()
+        try:
+            await _metrics_task
+        except asyncio.CancelledError:
+            pass
+
     await shutdown_kafka()
 
 
@@ -42,9 +78,13 @@ app = FastAPI(
     Multiple tenants can bookmark the same URL without conflicts.
     """,
     lifespan=lifespan,
+    root_path="/api/v1/bookmarks",
     docs_url="/docs",  # Swagger UI
     redoc_url="/redoc",  # ReDoc UI
 )
+
+# Setup Prometheus metrics
+setup_metrics(app, settings.app_name, settings.app_version)
 
 
 # Middleware

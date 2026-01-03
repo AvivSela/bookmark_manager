@@ -1,0 +1,63 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'bookmark-cluster'
+    environment: 'development'
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Kubernetes services (bookmark, enrichment, validation)
+  # These services are exposed via NodePort or port-forwarding
+  - job_name: 'bookmark-service'
+    static_configs:
+      - targets: ['host.docker.internal:30800']  # K8s NodePort or port-forward
+        labels:
+          service: 'bookmark-service'
+          environment: 'development'
+    metrics_path: '/metrics'
+
+  - job_name: 'enrichment-service'
+    static_configs:
+      - targets: ['host.docker.internal:30801']  # K8s NodePort or port-forward
+        labels:
+          service: 'enrichment-service'
+          environment: 'development'
+    metrics_path: '/metrics'
+
+  - job_name: 'validation-service'
+    static_configs:
+      - targets: ['host.docker.internal:30802']  # K8s NodePort or port-forward
+        labels:
+          service: 'validation-service'
+          environment: 'development'
+    metrics_path: '/metrics'
+
+  # PostgreSQL exporter (running in Docker Compose)
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+        labels:
+          service: 'postgres'
+          environment: 'development'
+
+  # Kafka exporter (running in Docker Compose)
+  - job_name: 'kafka-exporter'
+    static_configs:
+      - targets: ['kafka-exporter:9308']
+        labels:
+          service: 'kafka'
+          environment: 'development'
+
+  # Node exporter (running in Docker Compose)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          service: 'node'
+          environment: 'development'

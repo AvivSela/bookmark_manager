@@ -1,0 +1,109 @@
+==== START logs for container kindnet-cni of pod kube-system/kindnet-b2jtb ====
+I0103 11:03:54.668159       1 main.go:390] probe TCP address bookmarks-cluster-control-plane:6443
+I0103 11:03:54.669569       1 main.go:109] connected to apiserver: https://bookmarks-cluster-control-plane:6443
+I0103 11:03:54.669868       1 main.go:139] hostIP = 172.19.0.2
+podIP = 172.19.0.2
+I0103 11:03:54.670000       1 main.go:148] setting mtu 1500 for CNI 
+I0103 11:03:54.670032       1 main.go:178] kindnetd IP family: "ipv4"
+I0103 11:03:54.670052       1 main.go:182] noMask IPv4 subnets: [10.244.0.0/16]
+time="2026-01-03T11:03:54Z" level=info msg="Created plugin 10-kube-network-policies (kindnetd, handles RunPodSandbox,RemovePodSandbox)"
+I0103 11:03:54.872901       1 controller.go:377] "Starting controller" name="kube-network-policies"
+I0103 11:03:54.872944       1 controller.go:381] "Waiting for informer caches to sync"
+I0103 11:03:54.872952       1 shared_informer.go:350] "Waiting for caches to sync" controller="kube-network-policies"
+time="2026-01-03T11:03:54Z" level=info msg="Registering plugin 10-kube-network-policies..."
+time="2026-01-03T11:03:54Z" level=info msg="Configuring plugin 10-kube-network-policies for runtime containerd/v2.2.0..."
+time="2026-01-03T11:03:54Z" level=info msg="Started plugin 10-kube-network-policies..."
+I0103 11:03:55.168446       1 nri.go:56] Synchronized state with the runtime (6 pods, 6 containers)...
+I0103 11:03:55.168463       1 shared_informer.go:357] "Caches are synced" controller="kube-network-policies"
+I0103 11:03:55.191441       1 metrics.go:72] Registering metrics
+I0103 11:03:55.191498       1 controller.go:711] "Syncing nftables rules"
+E0103 11:03:55.191677       1 controller.go:417] "reading nfqueue stats" err="open /proc/net/netfilter/nfnetlink_queue: no such file or directory"
+I0103 11:04:04.872932       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:04:04.873000       1 main.go:301] handling current node
+I0103 11:04:14.879341       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:04:14.879391       1 main.go:301] handling current node
+I0103 11:04:24.880439       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:04:24.880489       1 main.go:301] handling current node
+I0103 11:04:34.880203       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:04:34.880270       1 main.go:301] handling current node
+I0103 11:04:44.873773       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:04:44.873823       1 main.go:301] handling current node
+I0103 11:04:54.873576       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:04:54.873615       1 main.go:301] handling current node
+I0103 11:05:04.876087       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:05:04.876134       1 main.go:301] handling current node
+I0103 11:05:14.879322       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:05:14.879370       1 main.go:301] handling current node
+I0103 11:05:24.876475       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:05:24.876540       1 main.go:301] handling current node
+I0103 11:05:34.880366       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:05:34.880402       1 main.go:301] handling current node
+I0103 11:05:44.873600       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:05:44.873644       1 main.go:301] handling current node
+I0103 11:05:54.880786       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:05:54.880831       1 main.go:301] handling current node
+I0103 11:06:04.874505       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:06:04.874557       1 main.go:301] handling current node
+I0103 11:06:14.881647       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:06:14.881752       1 main.go:301] handling current node
+I0103 11:06:24.880901       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:06:24.880976       1 main.go:301] handling current node
+I0103 11:06:34.880460       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:06:34.880507       1 main.go:301] handling current node
+I0103 11:06:44.872824       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:06:44.872874       1 main.go:301] handling current node
+I0103 11:06:54.881960       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:06:54.882005       1 main.go:301] handling current node
+I0103 11:07:04.879471       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:07:04.879516       1 main.go:301] handling current node
+I0103 11:07:14.881135       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:07:14.881203       1 main.go:301] handling current node
+I0103 11:07:24.881961       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:07:24.882081       1 main.go:301] handling current node
+I0103 11:07:34.876974       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:07:34.877018       1 main.go:301] handling current node
+I0103 11:07:44.881823       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:07:44.881872       1 main.go:301] handling current node
+I0103 11:07:54.881829       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:07:54.881875       1 main.go:301] handling current node
+I0103 11:08:04.873838       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:08:04.873926       1 main.go:301] handling current node
+I0103 11:08:14.879970       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:08:14.880034       1 main.go:301] handling current node
+I0103 11:08:24.881412       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:08:24.881458       1 main.go:301] handling current node
+I0103 11:08:34.888740       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:08:34.890215       1 main.go:301] handling current node
+I0103 11:08:44.875389       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:08:44.875470       1 main.go:301] handling current node
+I0103 11:08:54.887731       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:08:54.889211       1 main.go:301] handling current node
+I0103 11:09:04.878396       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:09:04.878442       1 main.go:301] handling current node
+I0103 11:09:14.878481       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:09:14.878518       1 main.go:301] handling current node
+I0103 11:09:24.872638       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:09:24.872686       1 main.go:301] handling current node
+I0103 11:09:34.876807       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:09:34.876855       1 main.go:301] handling current node
+I0103 11:09:44.881853       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:09:44.881900       1 main.go:301] handling current node
+I0103 11:09:54.873172       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:09:54.873201       1 main.go:301] handling current node
+I0103 11:10:04.878654       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:10:04.878743       1 main.go:301] handling current node
+I0103 11:10:14.880427       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:10:14.880463       1 main.go:301] handling current node
+I0103 11:10:24.875634       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:10:24.875718       1 main.go:301] handling current node
+I0103 11:10:34.880127       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:10:34.880209       1 main.go:301] handling current node
+I0103 11:10:44.876147       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:10:44.876202       1 main.go:301] handling current node
+I0103 11:10:54.873463       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:10:54.873510       1 main.go:301] handling current node
+I0103 11:11:04.878736       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:11:04.878770       1 main.go:301] handling current node
+I0103 11:11:14.873166       1 main.go:297] Handling node with IPs: map[172.19.0.2:{}]
+I0103 11:11:14.873209       1 main.go:301] handling current node
+==== END logs for container kindnet-cni of pod kube-system/kindnet-b2jtb ====

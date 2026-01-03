@@ -1,0 +1,221 @@
+{
+    "kind": "EventList",
+    "apiVersion": "v1",
+    "metadata": {
+        "resourceVersion": "1030"
+    },
+    "items": [
+        {
+            "metadata": {
+                "name": "bookmarks-cluster-control-plane.188733b3b0a1d1da",
+                "namespace": "default",
+                "uid": "8ddbde16-190c-44a4-99ac-661f498ee7c2",
+                "resourceVersion": "228",
+                "creationTimestamp": "2026-01-03T11:03:45Z"
+            },
+            "involvedObject": {
+                "kind": "Node",
+                "name": "bookmarks-cluster-control-plane",
+                "apiVersion": "v1"
+            },
+            "reason": "Starting",
+            "message": "Starting kubelet.",
+            "source": {
+                "component": "kubelet",
+                "host": "bookmarks-cluster-control-plane"
+            },
+            "firstTimestamp": "2026-01-03T11:03:45Z",
+            "lastTimestamp": "2026-01-03T11:03:45Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "bookmarks-cluster-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "bookmarks-cluster-control-plane.188733b3b7119f1a",
+                "namespace": "default",
+                "uid": "4a0bb357-7781-429d-a309-1e34583b29f3",
+                "resourceVersion": "235",
+                "creationTimestamp": "2026-01-03T11:03:45Z"
+            },
+            "involvedObject": {
+                "kind": "Node",
+                "name": "bookmarks-cluster-control-plane",
+                "apiVersion": "v1"
+            },
+            "reason": "NodeAllocatableEnforced",
+            "message": "Updated Node Allocatable limit across pods",
+            "source": {
+                "component": "kubelet",
+                "host": "bookmarks-cluster-control-plane"
+            },
+            "firstTimestamp": "2026-01-03T11:03:45Z",
+            "lastTimestamp": "2026-01-03T11:03:45Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "bookmarks-cluster-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "bookmarks-cluster-control-plane.188733b3bd0a05b2",
+                "namespace": "default",
+                "uid": "e2636732-3f08-4e7b-b2d9-f4e7c9d4db4d",
+                "resourceVersion": "241",
+                "creationTimestamp": "2026-01-03T11:03:45Z"
+            },
+            "involvedObject": {
+                "kind": "Node",
+                "name": "bookmarks-cluster-control-plane",
+                "apiVersion": "v1"
+            },
+            "reason": "NodeHasSufficientMemory",
+            "message": "Node bookmarks-cluster-control-plane status is now: NodeHasSufficientMemory",
+            "source": {
+                "component": "kubelet",
+                "host": "bookmarks-cluster-control-plane"
+            },
+            "firstTimestamp": "2026-01-03T11:03:45Z",
+            "lastTimestamp": "2026-01-03T11:03:45Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "bookmarks-cluster-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "bookmarks-cluster-control-plane.188733b3bd0ab2c2",
+                "namespace": "default",
+                "uid": "f287033f-156c-4c70-b2f7-581231436f77",
+                "resourceVersion": "242",
+                "creationTimestamp": "2026-01-03T11:03:45Z"
+            },
+            "involvedObject": {
+                "kind": "Node",
+                "name": "bookmarks-cluster-control-plane",
+                "apiVersion": "v1"
+            },
+            "reason": "NodeHasNoDiskPressure",
+            "message": "Node bookmarks-cluster-control-plane status is now: NodeHasNoDiskPressure",
+            "source": {
+                "component": "kubelet",
+                "host": "bookmarks-cluster-control-plane"
+            },
+            "firstTimestamp": "2026-01-03T11:03:45Z",
+            "lastTimestamp": "2026-01-03T11:03:45Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "bookmarks-cluster-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "bookmarks-cluster-control-plane.188733b3bd0ac6cb",
+                "namespace": "default",
+                "uid": "7cfafaba-4fd8-41e0-b8a4-3e1d7cf3a8ef",
+                "resourceVersion": "243",
+                "creationTimestamp": "2026-01-03T11:03:45Z"
+            },
+            "involvedObject": {
+                "kind": "Node",
+                "name": "bookmarks-cluster-control-plane",
+                "apiVersion": "v1"
+            },
+            "reason": "NodeHasSufficientPID",
+            "message": "Node bookmarks-cluster-control-plane status is now: NodeHasSufficientPID",
+            "source": {
+                "component": "kubelet",
+                "host": "bookmarks-cluster-control-plane"
+            },
+            "firstTimestamp": "2026-01-03T11:03:45Z",
+            "lastTimestamp": "2026-01-03T11:03:45Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "bookmarks-cluster-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "bookmarks-cluster-control-plane.188733b4f3de7442",
+                "namespace": "default",
+                "uid": "4b3a7806-597a-4922-b268-967e3d9f9291",
+                "resourceVersion": "318",
+                "creationTimestamp": "2026-01-03T11:03:51Z"
+            },
+            "involvedObject": {
+                "kind": "Node",
+                "name": "bookmarks-cluster-control-plane",
+                "uid": "fe0fefd3-6f45-4fee-a571-ff494141447e",
+                "apiVersion": "v1"
+            },
+            "reason": "RegisteredNode",
+            "message": "Node bookmarks-cluster-control-plane event: Registered Node bookmarks-cluster-control-plane in Controller",
+            "source": {
+                "component": "node-controller"
+            },
+            "firstTimestamp": "2026-01-03T11:03:51Z",
+            "lastTimestamp": "2026-01-03T11:03:51Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "node-controller",
+            "reportingInstance": ""
+        },
+        {
+            "metadata": {
+                "name": "bookmarks-cluster-control-plane.188733b588373bf4",
+                "namespace": "default",
+                "uid": "e2a0bb8a-1a47-4a0c-945a-163849a0c9a9",
+                "resourceVersion": "396",
+                "creationTimestamp": "2026-01-03T11:03:53Z"
+            },
+            "involvedObject": {
+                "kind": "Node",
+                "name": "bookmarks-cluster-control-plane",
+                "apiVersion": "v1"
+            },
+            "reason": "Starting",
+            "source": {},
+            "firstTimestamp": null,
+            "lastTimestamp": null,
+            "type": "Normal",
+            "eventTime": "2026-01-03T11:03:53.533626Z",
+            "action": "StartKubeProxy",
+            "reportingComponent": "kube-proxy",
+            "reportingInstance": "kube-proxy-bookmarks-cluster-control-plane"
+        },
+        {
+            "metadata": {
+                "name": "bookmarks-cluster-control-plane.188733b831a0a9ab",
+                "namespace": "default",
+                "uid": "3c0f30f3-0019-419f-af2d-d79ac0761a02",
+                "resourceVersion": "427",
+                "creationTimestamp": "2026-01-03T11:04:04Z"
+            },
+            "involvedObject": {
+                "kind": "Node",
+                "name": "bookmarks-cluster-control-plane",
+                "apiVersion": "v1"
+            },
+            "reason": "NodeReady",
+            "message": "Node bookmarks-cluster-control-plane status is now: NodeReady",
+            "source": {
+                "component": "kubelet",
+                "host": "bookmarks-cluster-control-plane"
+            },
+            "firstTimestamp": "2026-01-03T11:04:04Z",
+            "lastTimestamp": "2026-01-03T11:04:04Z",
+            "count": 1,
+            "type": "Normal",
+            "eventTime": null,
+            "reportingComponent": "kubelet",
+            "reportingInstance": "bookmarks-cluster-control-plane"
+        }
+    ]
+}

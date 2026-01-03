@@ -1,0 +1,27 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: ingress-ready=true
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 80
+    protocol: TCP
+  - containerPort: 443
+    hostPort: 443
+    protocol: TCP
+  # Metrics endpoints for Prometheus
+  - containerPort: 30800
+    hostPort: 30800
+    protocol: TCP
+  - containerPort: 30801
+    hostPort: 30801
+    protocol: TCP
+  - containerPort: 30802
+    hostPort: 30802
+    protocol: TCP

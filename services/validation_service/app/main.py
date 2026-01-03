@@ -10,18 +10,18 @@ from fastapi import FastAPI
 
 from app.config import get_settings
 from app.kafka import BookmarkConsumer, ValidationEventProducer
+from app.logging_config import setup_json_logging
+from app.metrics import setup_metrics
 from app.routes import health_router, validation_router
 from app.routes.validation import set_dependencies
 from app.scheduler import RevalidationScheduler
 from app.validators import BookmarkServiceClient, URLValidator
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
-
 settings = get_settings()
+
+# Setup structured JSON logging
+setup_json_logging(service_name="validation-service", log_level="INFO")
+logger = logging.getLogger(__name__)
 
 # Global references for cleanup
 producer: ValidationEventProducer = None
@@ -114,7 +114,15 @@ async def lifespan(app: FastAPI):
 
 
 # Create FastAPI app
-app = FastAPI(title=settings.app_name, version=settings.app_version, lifespan=lifespan)
+app = FastAPI(
+    title=settings.app_name,
+    version=settings.app_version,
+    lifespan=lifespan,
+    root_path="/api/v1/validation",
+)
+
+# Setup Prometheus metrics
+setup_metrics(app, settings.app_name, settings.app_version)
 
 # Register routes
 app.include_router(health_router)
