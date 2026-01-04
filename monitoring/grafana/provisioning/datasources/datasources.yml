@@ -22,14 +22,19 @@ datasources:
     jsonData:
       maxLines: 1000
       derivedFields:
-        # Allow clicking on request_id in logs to query related logs
+        # Request ID correlation - link to logs with same request_id
         - datasourceUid: loki
           matcherRegex: '"request_id":"([^"]+)"'
-          name: request_id
-          url: $${__value.raw}
-        # Allow clicking on bookmark_id in logs to query related logs
+          name: "View Request Logs"
+          url: '/explore?left={"datasource":"Loki","queries":[{"expr":"{service=~\\".+\\"} | json | request_id=\\"$${__value.raw}\\"","refId":"A"}],"range":{"from":"now-1h","to":"now"}}'
+        # Bookmark ID correlation - link to logs for this bookmark
         - datasourceUid: loki
           matcherRegex: '"bookmark_id":"([^"]+)"'
-          name: bookmark_id
-          url: $${__value.raw}
+          name: "View Bookmark Logs"
+          url: '/explore?left={"datasource":"Loki","queries":[{"expr":"{service=~\\".+\\"} | json | bookmark_id=\\"$${__value.raw}\\"","refId":"A"}],"range":{"from":"now-1h","to":"now"}}'
+        # Tenant ID correlation
+        - datasourceUid: loki
+          matcherRegex: '"tenant_id":"([^"]+)"'
+          name: "View Tenant Logs"
+          url: '/explore?left={"datasource":"Loki","queries":[{"expr":"{service=~\\".+\\"} | json | tenant_id=\\"$${__value.raw}\\"","refId":"A"}],"range":{"from":"now-1h","to":"now"}}'
     version: 1

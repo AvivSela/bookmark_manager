@@ -1,0 +1,340 @@
+{
+  "dashboard": {
+    "title": "Bookmark Services - Logs",
+    "tags": ["logs", "bookmark", "microservices"],
+    "timezone": "browser",
+    "schemaVersion": 39,
+    "version": 1,
+    "refresh": "10s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "templating": {
+      "list": [
+        {
+          "name": "service",
+          "type": "custom",
+          "multi": true,
+          "includeAll": true,
+          "options": [
+            {
+              "text": "Bookmark Service",
+              "value": "bookmark-service",
+              "selected": true
+            },
+            {
+              "text": "Enrichment Service",
+              "value": "enrichment-service",
+              "selected": true
+            },
+            {
+              "text": "Validation Service",
+              "value": "validation-service",
+              "selected": true
+            }
+          ],
+          "current": {
+            "text": "All",
+            "value": "$__all"
+          },
+          "query": "bookmark-service,enrichment-service,validation-service"
+        },
+        {
+          "name": "level",
+          "type": "custom",
+          "multi": true,
+          "includeAll": true,
+          "options": [
+            {
+              "text": "INFO",
+              "value": "INFO",
+              "selected": true
+            },
+            {
+              "text": "WARNING",
+              "value": "WARNING",
+              "selected": true
+            },
+            {
+              "text": "ERROR",
+              "value": "ERROR",
+              "selected": true
+            },
+            {
+              "text": "DEBUG",
+              "value": "DEBUG",
+              "selected": false
+            }
+          ],
+          "current": {
+            "text": "All",
+            "value": "$__all"
+          },
+          "query": "INFO,WARNING,ERROR,DEBUG"
+        },
+        {
+          "name": "request_id",
+          "type": "textbox",
+          "label": "Request ID"
+        },
+        {
+          "name": "tenant_id",
+          "type": "textbox",
+          "label": "Tenant ID"
+        },
+        {
+          "name": "bookmark_id",
+          "type": "textbox",
+          "label": "Bookmark ID"
+        }
+      ]
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Live Log Stream - All Services",
+        "type": "logs",
+        "gridPos": {
+          "x": 0,
+          "y": 0,
+          "w": 24,
+          "h": 12
+        },
+        "targets": [
+          {
+            "expr": "{service=~\"$service\"} | json | level=~\"$level\" | line_format \"{{.timestamp}} [{{.level}}] {{.service}} {{.logger}} - {{.message}}\"",
+            "refId": "A",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            }
+          }
+        ],
+        "options": {
+          "showTime": true,
+          "showLabels": false,
+          "showCommonLabels": false,
+          "wrapLogMessage": true,
+          "prettifyLogMessage": false,
+          "enableLogDetails": true,
+          "dedupStrategy": "none",
+          "sortOrder": "Descending"
+        }
+      },
+      {
+        "id": 2,
+        "title": "Log Volume by Service",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 0,
+          "y": 12,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "sum by (service) (count_over_time({service=~\"$service\"} | json | level=~\"$level\" [1m]))",
+            "refId": "A",
+            "legendFormat": "{{service}}",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            }
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "drawStyle": "bars",
+              "fillOpacity": 80,
+              "stacking": {
+                "mode": "normal"
+              },
+              "lineWidth": 0,
+              "showPoints": "never"
+            },
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Log Volume by Level",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 12,
+          "y": 12,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "sum by (level) (count_over_time({service=~\"$service\"} | json | level=~\"$level\" [1m]))",
+            "refId": "A",
+            "legendFormat": "{{level}}",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            }
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "drawStyle": "bars",
+              "fillOpacity": 80,
+              "stacking": {
+                "mode": "normal"
+              },
+              "lineWidth": 0,
+              "showPoints": "never"
+            },
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ERROR"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "red"
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "WARNING"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "yellow"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 4,
+        "title": "Errors and Warnings",
+        "type": "logs",
+        "gridPos": {
+          "x": 0,
+          "y": 20,
+          "w": 24,
+          "h": 10
+        },
+        "targets": [
+          {
+            "expr": "{service=~\"$service\"} | json | level=~\"ERROR|WARNING\" | line_format \"{{.timestamp}} [{{.level}}] {{.service}} {{.logger}} - {{.message}}\"",
+            "refId": "A",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            }
+          }
+        ],
+        "options": {
+          "showTime": true,
+          "enableLogDetails": true,
+          "dedupStrategy": "none",
+          "sortOrder": "Descending"
+        }
+      },
+      {
+        "id": 5,
+        "title": "Bookmark Service Logs",
+        "type": "logs",
+        "gridPos": {
+          "x": 0,
+          "y": 30,
+          "w": 8,
+          "h": 10
+        },
+        "targets": [
+          {
+            "expr": "{service=\"bookmark-service\"} | json | level=~\"$level\"",
+            "refId": "A",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            }
+          }
+        ],
+        "options": {
+          "showTime": true,
+          "enableLogDetails": true,
+          "dedupStrategy": "none",
+          "sortOrder": "Descending"
+        }
+      },
+      {
+        "id": 6,
+        "title": "Enrichment Service Logs",
+        "type": "logs",
+        "gridPos": {
+          "x": 8,
+          "y": 30,
+          "w": 8,
+          "h": 10
+        },
+        "targets": [
+          {
+            "expr": "{service=\"enrichment-service\"} | json | level=~\"$level\"",
+            "refId": "A",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            }
+          }
+        ],
+        "options": {
+          "showTime": true,
+          "enableLogDetails": true,
+          "dedupStrategy": "none",
+          "sortOrder": "Descending"
+        }
+      },
+      {
+        "id": 7,
+        "title": "Validation Service Logs",
+        "type": "logs",
+        "gridPos": {
+          "x": 16,
+          "y": 30,
+          "w": 8,
+          "h": 10
+        },
+        "targets": [
+          {
+            "expr": "{service=\"validation-service\"} | json | level=~\"$level\"",
+            "refId": "A",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            }
+          }
+        ],
+        "options": {
+          "showTime": true,
+          "enableLogDetails": true,
+          "dedupStrategy": "none",
+          "sortOrder": "Descending"
+        }
+      }
+    ]
+  },
+  "overwrite": true
+}

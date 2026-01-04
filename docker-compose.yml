@@ -128,7 +128,7 @@ services:
     image: grafana/promtail:latest
     container_name: bookmark-promtail
     command: -config.file=/etc/promtail/promtail-config.yml
-    user: root
+    user: "0:984"  # root:docker group
     volumes:
       - ./monitoring/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
