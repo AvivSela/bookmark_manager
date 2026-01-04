@@ -65,6 +65,79 @@ Once running, you can access:
 - **Kafdrop (Kafka UI)**: http://localhost:9000
   - View topics, messages, and consumer groups
 
+- **Prometheus (Metrics)**: http://localhost:9090
+  - Time-series metrics database
+  - Query interface at http://localhost:9090/graph
+
+- **Grafana (Dashboards)**: http://localhost:3000
+  - Visualization and monitoring dashboards
+  - Default credentials: `admin` / `admin`
+
+## Kubernetes Deployment (Alternative to Docker Compose)
+
+Deploy to Kubernetes using manifests in [k8s/](k8s/). Designed for local clusters (kind/minikube).
+
+### Prerequisites for K8s
+
+- kubectl, kind or minikube, Docker
+- PostgreSQL and Kafka running (via Docker Compose on host)
+
+### Quick Deploy
+
+```bash
+# 1. Start infrastructure
+docker compose up -d postgres kafka
+
+# 2. Create cluster
+kind create cluster --name bookmark-cluster
+
+# 3. Build and load images
+docker build -t bookmark-service:latest services/bookmark_service/
+docker build -t validation-service:latest services/validation_service/
+docker build -t enrichment-service:latest services/enrichment_service/
+
+kind load docker-image bookmark-service:latest --name bookmark-cluster
+kind load docker-image validation-service:latest --name bookmark-cluster
+kind load docker-image enrichment-service:latest --name bookmark-cluster
+
+# 4. Update IPs in k8s/*.yaml files to match your Docker network
+docker inspect bookmark-postgres | grep IPAddress
+docker inspect bookmark-kafka | grep IPAddress
+
+# 5. Deploy
+kubectl apply -f k8s/
+
+# 6. Access via port forwarding
+kubectl port-forward svc/bookmark-service 8000:80
+```
+
+**Note**: Current setup uses hardcoded IPs for PostgreSQL (`172.17.0.1`) and Kafka (`172.19.0.3`). Update deployment manifests with your actual Docker bridge IPs.
+
+### Ingress (Optional)
+
+Access via <http://bookmark.test> after:
+
+1. Installing NGINX Ingress Controller
+2. Adding `127.0.0.1 bookmark.test` to `/etc/hosts`
+
+See [k8s/ingress.yaml](k8s/ingress.yaml) for routes.
+
+## Monitoring
+
+All services expose Prometheus metrics at `/metrics` endpoints:
+
+- Bookmark Service: http://localhost:8000/metrics
+- Validation Service: http://localhost:8002/metrics
+- Enrichment Service: http://localhost:8001/metrics
+
+**Quick metrics check:**
+```bash
+# View metrics from any service
+docker exec bookmark-prometheus wget -O- http://bookmark-service:8000/metrics 2>&1 | head -20
+```
+
+Metrics are automatically scraped by Prometheus and can be visualized in Grafana.
+
 ## Common Commands
 
 ### View Logs

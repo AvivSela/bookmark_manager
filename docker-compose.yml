@@ -128,14 +128,13 @@ services:
     image: grafana/promtail:latest
     container_name: bookmark-promtail
     command: -config.file=/etc/promtail/promtail-config.yml
+    user: root
     volumes:
       - ./monitoring/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
-      - ~/.kube/config:/kubeconfig/config:ro
-      - /var/log:/var/log:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
     networks:
       - bookmark-network
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
       - loki
     restart: unless-stopped
