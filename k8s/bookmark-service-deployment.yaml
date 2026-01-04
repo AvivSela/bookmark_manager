@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    io.kompose.service: bookmark-service
+    app: bookmark
   name: bookmark-service
 spec:
   replicas: 1

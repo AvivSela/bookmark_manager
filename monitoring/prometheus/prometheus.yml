@@ -13,10 +13,10 @@ scrape_configs:
       - targets: ['localhost:9090']
 
   # Kubernetes services (bookmark, enrichment, validation)
-  # These services are exposed via NodePort or port-forwarding
+  # These services are exposed via NodePort on Kind cluster (172.18.0.12 on bookmark network)
   - job_name: 'bookmark-service'
     static_configs:
-      - targets: ['host.docker.internal:30800']  # K8s NodePort or port-forward
+      - targets: ['172.18.0.12:30800']  # K8s NodePort via Kind container on bookmark network
         labels:
           service: 'bookmark-service'
           environment: 'development'
@@ -24,7 +24,7 @@ scrape_configs:
 
   - job_name: 'enrichment-service'
     static_configs:
-      - targets: ['host.docker.internal:30801']  # K8s NodePort or port-forward
+      - targets: ['172.18.0.12:30801']  # K8s NodePort via Kind container on bookmark network
         labels:
           service: 'enrichment-service'
           environment: 'development'
@@ -32,7 +32,7 @@ scrape_configs:
 
   - job_name: 'validation-service'
     static_configs:
-      - targets: ['host.docker.internal:30802']  # K8s NodePort or port-forward
+      - targets: ['172.18.0.12:30802']  # K8s NodePort via Kind container on bookmark network
         labels:
           service: 'validation-service'
           environment: 'development'

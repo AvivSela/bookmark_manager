@@ -9,6 +9,12 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 logger = logging.getLogger(__name__)
 
+HTTP_REQUESTS_TOTAL = Counter(
+    'http_requests_total', 
+    'Total number of HTTP requests', 
+    ['method', 'endpoint', 'service']
+)
+
 # HTTP metrics (automatically collected by instrumentator)
 # - http_requests_total
 # - http_request_duration_seconds

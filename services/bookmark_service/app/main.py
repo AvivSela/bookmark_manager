@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 import uuid
 from contextlib import asynccontextmanager
 
@@ -10,7 +11,7 @@ from app.config import get_settings
 from app.database import init_db
 from app.kafka import init_kafka, shutdown_kafka
 from app.logging_config import setup_json_logging
-from app.metrics import collect_db_pool_metrics, setup_metrics
+from app.metrics import HTTP_REQUESTS_TOTAL, collect_db_pool_metrics, setup_metrics
 from app.routes import bookmarks, health
 from app.validation_exception_handler import (
     global_exception_handler,
@@ -86,6 +87,24 @@ app = FastAPI(
 # Setup Prometheus metrics
 setup_metrics(app, settings.app_name, settings.app_version)
 
+
+@app.middleware("http")
+async def prometheus_middleware(request: Request, call_next):
+    method = request.method
+    path = request.url.path
+    service_name = "bookmark-service" # You can also pull this from an env var
+    
+    # Start timer
+    start_time = time.time()
+    
+    # Process the request
+    response = await call_next(request)
+    
+    # 2. Record Metrics in ONE place
+    duration = time.time() - start_time
+    HTTP_REQUESTS_TOTAL.labels(method=method, endpoint=path, service=service_name).inc()
+    
+    return response
 
 # Middleware
 @app.middleware("http")
