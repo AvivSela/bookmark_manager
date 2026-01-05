@@ -17,30 +17,16 @@ spec:
     spec:
       containers:
       - env:
-        - name: BOOKMARK_SERVICE_HOST
-          value: bookmark-service
-        - name: BOOKMARK_SERVICE_PORT
-          value: "8000"
-        - name: BOOKMARK_SERVICE_TIMEOUT_SECONDS
-          value: "10"
-        - name: DEBUG
-          value: "false"
-        - name: ENABLE_METRICS
-          value: "true"
-        - name: ENABLE_SCHEDULER
-          value: "true"
-        - name: HOST
-          value: 0.0.0.0
-        - name: KAFKA_BOOTSTRAP_SERVERS
-          value: 172.19.0.3:9092
-        - name: KAFKA_CONSUMER_GROUP
-          value: validation-service
-        - name: KAFKA_TOPIC
-          value: bookmarks.bookmark.created
-        - name: KAFKA_VALIDATION_TOPIC
-          value: bookmarks.validation.completed
         - name: PORT
           value: "8002"
+        - name: HOST
+          value: "0.0.0.0"
+        - name: APP_NAME
+          value: "Bookmark Validation Service"
+        - name: KAFKA_CONSUMER_GROUP
+          value: "validation-service"
+        - name: ENABLE_SCHEDULER
+          value: "true"
         - name: REVALIDATION_BATCH_SIZE
           value: "100"
         - name: REVALIDATION_INTERVAL_HOURS
@@ -49,6 +35,9 @@ spec:
           value: "3"
         - name: VALIDATION_TIMEOUT_SECONDS
           value: "10"
+        envFrom:
+        - configMapRef:
+            name: external-services-config
         image: validation-service
         imagePullPolicy: Never
         livenessProbe:

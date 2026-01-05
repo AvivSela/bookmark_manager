@@ -14,7 +14,7 @@ data:
       filename: /tmp/positions.yaml
 
     clients:
-      - url: http://172.18.0.8:3100/loki/api/v1/push
+      - url: http://bookmark-loki:3100/loki/api/v1/push
 
     scrape_configs:
       - job_name: kubernetes-pods

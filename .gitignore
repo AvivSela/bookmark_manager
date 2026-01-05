@@ -57,3 +57,4 @@ htmlcov/
 venv/
 ENV/
 env/
+k8s/postgres-credentials-secret.yaml

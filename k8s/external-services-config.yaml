@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: external-services-config
+  namespace: default
+  labels:
+    app: bookmark-system
+    component: configuration
+data:
+  # Kafka Configuration
+  KAFKA_BOOTSTRAP_SERVERS: "bookmark-kafka:9092"
+  KAFKA_TOPIC_PREFIX: "bookmarks"
+  KAFKA_COMPRESSION_TYPE: "gzip"
+  KAFKA_MAX_RETRIES: "3"
+  KAFKA_REQUEST_TIMEOUT_MS: "30000"
+  KAFKA_ENABLED: "true"
+  KAFKA_TOPIC: "bookmarks.bookmark.created"
+  KAFKA_VALIDATION_TOPIC: "bookmarks.validation.completed"
+  KAFKA_AUTO_OFFSET_RESET: "earliest"
+  KAFKA_SESSION_TIMEOUT_MS: "30000"
+  KAFKA_MAX_POLL_RECORDS: "10"
+
+  # PostgreSQL Connection
+  POSTGRES_HOST: "bookmark-postgres"
+  POSTGRES_PORT: "5432"
+
+  # Loki Configuration
+  LOKI_URL: "http://bookmark-loki:3100/loki/api/v1/push"
+
+  # Inter-service Communication (K8s internal)
+  BOOKMARK_SERVICE_HOST: "bookmark-service"
+  BOOKMARK_SERVICE_PORT: "80"
+  BOOKMARK_SERVICE_TIMEOUT_SECONDS: "10"
+
+  # Feature Flags
+  DEBUG: "false"
+  ENABLE_METRICS: "true"
+  HOST: "0.0.0.0"

@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     # ===== Enrichment Configuration =====
 
     # Enabled enrichers (comma-separated list)
-    enabled_enrichers: str = "webpage,image,dataset,api"
+    enabled_enrichers: str = "webpage,trafilatura,image,dataset,api"
     max_parallel_enrichers: int = 5
 
     # Image enricher settings

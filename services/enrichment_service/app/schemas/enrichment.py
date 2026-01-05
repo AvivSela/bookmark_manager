@@ -45,3 +45,8 @@ class EnrichmentResult(BaseModel):
         None,
         description="Media-specific fields: dimensions, duration, codec, etc.",
     )
+
+    webpage_metadata: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Extracted webpage content metadata: text, title, author, date, language, description, sitename, tags, categories, etc.",
+    )

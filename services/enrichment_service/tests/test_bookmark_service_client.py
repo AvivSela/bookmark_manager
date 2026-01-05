@@ -58,6 +58,8 @@ class TestBookmarkServiceClient:
                 assert '"og_site_name": "Test Site"' in payload
                 assert '"meta_description": "Meta description"' in payload
                 assert '"favicon_url": "https://example.com/favicon.ico"' in payload
+                assert '"webpage_metadata"' in payload
+                assert '"text": "Sample extracted text content"' in payload
 
     async def test_update_bookmark_enrichment_sends_tenant_id_header(
         self, sample_enrichment_result
@@ -179,3 +181,61 @@ class TestBookmarkServiceClient:
                     await client.update_bookmark_enrichment(
                         bookmark_id, tenant_id, sample_enrichment_result
                     )
+
+    async def test_update_bookmark_enrichment_includes_webpage_metadata(self):
+        """Test that webpage_metadata is included in enrichment payload."""
+        from app.schemas.enrichment import EnrichmentResult
+
+        bookmark_id = uuid4()
+        tenant_id = "test-user-123"
+        enrichment_result = EnrichmentResult(
+            og_title="Test Title",
+            webpage_metadata={
+                "text": "Sample content",
+                "title": "Article Title",
+                "author": "Author Name",
+            },
+        )
+
+        async with respx.mock:
+            route = respx.put(
+                f"http://bookmark-service:8000/bookmarks/{bookmark_id}"
+            ).mock(return_value=httpx.Response(200, json={"success": True}))
+
+            async with BookmarkServiceClient() as client:
+                result = await client.update_bookmark_enrichment(
+                    bookmark_id, tenant_id, enrichment_result
+                )
+
+            # Verify webpage_metadata is in the payload
+            request = route.calls.last.request
+            payload = request.content.decode("utf-8")
+            assert '"webpage_metadata"' in payload
+            assert '"text": "Sample content"' in payload
+            assert result is True
+
+    async def test_update_bookmark_enrichment_filters_none_webpage_metadata(self):
+        """Test that None webpage_metadata is filtered out."""
+        from app.schemas.enrichment import EnrichmentResult
+
+        bookmark_id = uuid4()
+        tenant_id = "test-user-123"
+        enrichment_result = EnrichmentResult(
+            og_title="Test Title",
+            webpage_metadata=None,
+        )
+
+        async with respx.mock:
+            route = respx.put(
+                f"http://bookmark-service:8000/bookmarks/{bookmark_id}"
+            ).mock(return_value=httpx.Response(200, json={"success": True}))
+
+            async with BookmarkServiceClient() as client:
+                await client.update_bookmark_enrichment(
+                    bookmark_id, tenant_id, enrichment_result
+                )
+
+            # Verify webpage_metadata is NOT in payload when None
+            request = route.calls.last.request
+            payload = request.content.decode("utf-8")
+            assert '"webpage_metadata"' not in payload

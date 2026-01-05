@@ -100,18 +100,22 @@ kind load docker-image bookmark-service:latest --name bookmark-cluster
 kind load docker-image validation-service:latest --name bookmark-cluster
 kind load docker-image enrichment-service:latest --name bookmark-cluster
 
-# 4. Update IPs in k8s/*.yaml files to match your Docker network
-docker inspect bookmark-postgres | grep IPAddress
-docker inspect bookmark-kafka | grep IPAddress
+# 4. Connect Kind cluster to Docker Compose network
+# This allows K8s pods to access Docker Compose services via DNS
+docker network connect bookmark_bookmark-network bookmarks-cluster-control-plane
 
-# 5. Deploy
+# 5. Deploy configuration and services
+kubectl apply -f k8s/external-services-config.yaml
+kubectl apply -f k8s/postgres-credentials-secret.yaml
 kubectl apply -f k8s/
 
-# 6. Access via port forwarding
+# 6. Verify connectivity (optional)
+kubectl exec -it deployment/bookmark-service -- ping -c 2 bookmark-kafka
+kubectl exec -it deployment/bookmark-service -- ping -c 2 bookmark-postgres
+
+# 7. Access via port forwarding
 kubectl port-forward svc/bookmark-service 8000:80
 ```
-
-**Note**: Current setup uses hardcoded IPs for PostgreSQL (`172.17.0.1`) and Kafka (`172.19.0.3`). Update deployment manifests with your actual Docker bridge IPs.
 
 ### Ingress (Optional)
 
@@ -121,6 +125,94 @@ Access via <http://bookmark.test> after:
 2. Adding `127.0.0.1 bookmark.test` to `/etc/hosts`
 
 See [k8s/ingress.yaml](k8s/ingress.yaml) for routes.
+
+## Kubernetes Configuration Management
+
+The Kubernetes deployment uses ConfigMaps and Secrets for centralized configuration management, following best practices for hybrid K8s + Docker Compose architectures.
+
+### Configuration Architecture
+
+1. **External Services ConfigMap** ([k8s/external-services-config.yaml](k8s/external-services-config.yaml))
+   - Stores DNS names and ports for Docker Compose services
+   - Kafka: `bookmark-kafka:9092`
+   - PostgreSQL: `bookmark-postgres:5432`
+   - Loki: `bookmark-loki:3100`
+   - Shared across all application services
+
+2. **PostgreSQL Credentials Secret** ([k8s/postgres-credentials-secret.yaml](k8s/postgres-credentials-secret.yaml))
+   - Stores database credentials securely
+   - Used by bookmark-service and enrichment-service
+   - **IMPORTANT**: Change default credentials for production
+
+3. **Service Deployments**
+   - Reference ConfigMap and Secret via `envFrom`
+   - Override service-specific settings via `env`
+   - No hardcoded IPs or credentials
+
+### Network Architecture
+
+```text
+Docker Compose Network (bookmark_bookmark-network)
+├── bookmark-kafka:9092        ← Kafka broker
+├── bookmark-postgres:5432     ← PostgreSQL database
+├── bookmark-loki:3100         ← Loki logging
+├── bookmark-prometheus:9090   ← Prometheus metrics
+└── bookmarks-cluster-control-plane:30800-30802  ← Kind cluster
+
+Kind Cluster (connected to same network)
+├── bookmark-service (NodePort 30800)
+├── enrichment-service (NodePort 30801)
+└── validation-service (NodePort 30802)
+```
+
+### Updating Configuration
+
+**Change external service endpoints:**
+```bash
+kubectl edit configmap external-services-config
+# Edit KAFKA_BOOTSTRAP_SERVERS, POSTGRES_HOST, etc.
+kubectl rollout restart deployment/bookmark-service
+kubectl rollout restart deployment/enrichment-service
+kubectl rollout restart deployment/validation-service
+```
+
+**Change database credentials:**
+```bash
+kubectl edit secret postgres-credentials
+# Edit base64-encoded values
+kubectl rollout restart deployment/bookmark-service
+kubectl rollout restart deployment/enrichment-service
+```
+
+**View current configuration:**
+```bash
+# View ConfigMap
+kubectl describe configmap external-services-config
+
+# View Secret (values are base64 encoded)
+kubectl get secret postgres-credentials -o yaml
+
+# Decode secret values
+kubectl get secret postgres-credentials -o jsonpath='{.data.POSTGRES_USER}' | base64 -d
+```
+
+### Production Considerations
+
+1. **Security**:
+   - Remove `k8s/postgres-credentials-secret.yaml` from git (add to .gitignore)
+   - Use Kubernetes secrets management (Sealed Secrets, External Secrets Operator)
+   - Use strong, unique passwords for all services
+   - Enable TLS for Kafka and PostgreSQL connections
+
+2. **High Availability**:
+   - Increase replica counts in deployments
+   - Use StatefulSets for Kafka and PostgreSQL
+   - Configure PersistentVolumeClaims for data persistence
+
+3. **Monitoring**:
+   - Prometheus automatically scrapes metrics from NodePorts
+   - Grafana dashboards configured for all services
+   - Loki aggregates logs from all K8s pods via Promtail
 
 ## Monitoring
 
@@ -403,6 +495,105 @@ docker compose up -d
 - Monitor Kafka topics and messages in Kafdrop
 - Use pgAdmin to view enriched bookmark data
 - Add additional microservices following the existing patterns
+
+## Troubleshooting Kubernetes
+
+### Services can't connect to Kafka or PostgreSQL
+
+**Problem**: Pods show errors like "Connection refused" or "Name or service not known"
+
+**Solution**:
+
+```bash
+# 1. Verify Kind cluster is connected to Docker network
+docker network inspect bookmark_bookmark-network | grep bookmarks-cluster-control-plane
+
+# 2. If not connected, connect it
+docker network connect bookmark_bookmark-network bookmarks-cluster-control-plane
+
+# 3. Test DNS resolution from inside a pod
+kubectl exec -it deployment/bookmark-service -- nslookup bookmark-kafka
+kubectl exec -it deployment/bookmark-service -- nslookup bookmark-postgres
+
+# 4. Verify Docker Compose services are running
+docker ps --filter "name=bookmark-kafka"
+docker ps --filter "name=bookmark-postgres"
+```
+
+### Prometheus not scraping Kubernetes services
+
+**Problem**: Prometheus shows "Context deadline exceeded" for K8s services
+
+**Solution**:
+
+```bash
+# 1. Verify NodePort services are accessible
+kubectl get svc
+
+# 2. Test from Prometheus container
+docker exec bookmark-prometheus wget -O- http://bookmarks-cluster-control-plane:30800/metrics
+
+# 3. If connection fails, verify Kind cluster name matches prometheus.yml
+docker ps --filter "name=control-plane" --format "{{.Names}}"
+
+# 4. Update prometheus.yml targets if cluster name is different
+# Edit monitoring/prometheus/prometheus.yml and restart Prometheus
+docker compose restart prometheus
+```
+
+### ConfigMap or Secret changes not taking effect
+
+**Problem**: Updated ConfigMap/Secret but pods still use old values
+
+**Solution**:
+
+```bash
+# Kubernetes doesn't automatically restart pods when ConfigMap/Secret changes
+# You must manually restart deployments:
+
+kubectl rollout restart deployment/bookmark-service
+kubectl rollout restart deployment/enrichment-service
+kubectl rollout restart deployment/validation-service
+
+# Or delete pods to force recreation:
+kubectl delete pods -l app=bookmark
+kubectl delete pods -l app=enrichment
+kubectl delete pods -l app=validation
+```
+
+### Clean slate deployment
+
+**Problem**: Want to reset Kubernetes configuration completely
+
+**Solution**:
+
+```bash
+# 1. Delete all K8s resources
+kubectl delete -f k8s/
+
+# 2. Delete Kind cluster
+kind delete cluster --name bookmark-cluster
+
+# 3. Recreate cluster
+kind create cluster --name bookmark-cluster
+
+# 4. Reconnect to Docker network
+docker network connect bookmark_bookmark-network bookmarks-cluster-control-plane
+
+# 5. Rebuild and reload images
+docker build -t bookmark-service:latest services/bookmark_service/
+docker build -t validation-service:latest services/validation_service/
+docker build -t enrichment-service:latest services/enrichment_service/
+
+kind load docker-image bookmark-service:latest --name bookmark-cluster
+kind load docker-image validation-service:latest --name bookmark-cluster
+kind load docker-image enrichment-service:latest --name bookmark-cluster
+
+# 6. Deploy fresh configuration
+kubectl apply -f k8s/external-services-config.yaml
+kubectl apply -f k8s/postgres-credentials-secret.yaml
+kubectl apply -f k8s/
+```
 
 ## License
 

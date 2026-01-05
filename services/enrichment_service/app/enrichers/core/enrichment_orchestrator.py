@@ -54,6 +54,12 @@ class EnrichmentOrchestrator:
 
             registry.register(ApiEnricher)
 
+        # Register TrafilaturaEnricher
+        if "trafilatura" not in registry.list_enrichers():
+            from app.enrichers.implementations.trafilatura_enricher import TrafilaturaEnricher
+
+            registry.register(TrafilaturaEnricher)
+
     def _select_enrichers(self, resource_type: "ResourceType") -> list["BaseEnricher"]:
         """
         Select applicable enrichers for the resource type with fallback logic.

@@ -90,6 +90,7 @@ class BookmarkServiceClient:
             "api_metadata": enrichment_result.api_metadata,
             "dataset_metadata": enrichment_result.dataset_metadata,
             "media_metadata": enrichment_result.media_metadata,
+            "webpage_metadata": enrichment_result.webpage_metadata,
         }
 
         # Filter out None values to keep JSON clean

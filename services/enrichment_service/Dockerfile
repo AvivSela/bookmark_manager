@@ -27,5 +27,5 @@ EXPOSE 8001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"
 
-# Run service
-CMD ["uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8001"]
+# Run service with Kafka consumer
+CMD ["python", "-m", "app.main"]

@@ -90,6 +90,13 @@ def sample_enrichment_result():
         og_site_name="Test Site",
         meta_description="Meta description",
         favicon_url="https://example.com/favicon.ico",
+        webpage_metadata={
+            "text": "Sample extracted text content",
+            "title": "Extracted Title",
+            "author": "Sample Author",
+            "date": "2024-01-15",
+            "language": "en",
+        },
     )
 
 

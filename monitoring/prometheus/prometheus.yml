@@ -13,10 +13,11 @@ scrape_configs:
       - targets: ['localhost:9090']
 
   # Kubernetes services (bookmark, enrichment, validation)
-  # These services are exposed via NodePort on Kind cluster (172.18.0.12 on bookmark network)
+  # These services are exposed via NodePort on Kind control plane container
+  # DNS name: bookmarks-cluster-control-plane (stable across restarts)
   - job_name: 'bookmark-service'
     static_configs:
-      - targets: ['172.18.0.12:30800']  # K8s NodePort via Kind container on bookmark network
+      - targets: ['bookmarks-cluster-control-plane:30800']
         labels:
           service: 'bookmark-service'
           environment: 'development'
@@ -24,7 +25,7 @@ scrape_configs:
 
   - job_name: 'enrichment-service'
     static_configs:
-      - targets: ['172.18.0.12:30801']  # K8s NodePort via Kind container on bookmark network
+      - targets: ['bookmarks-cluster-control-plane:30801']
         labels:
           service: 'enrichment-service'
           environment: 'development'
@@ -32,7 +33,7 @@ scrape_configs:
 
   - job_name: 'validation-service'
     static_configs:
-      - targets: ['172.18.0.12:30802']  # K8s NodePort via Kind container on bookmark network
+      - targets: ['bookmarks-cluster-control-plane:30802']
         labels:
           service: 'validation-service'
           environment: 'development'
