@@ -5,6 +5,7 @@ import time
 from typing import Any, Dict
 
 import httpx
+from lxml.etree import _Element
 from trafilatura import bare_extraction
 
 from app.config import get_settings
@@ -24,6 +25,32 @@ class TrafilaturaEnricher(BaseEnricher):
 
     # Maximum response size: 5MB to prevent memory exhaustion
     MAX_RESPONSE_SIZE = 5 * 1024 * 1024  # 5MB in bytes
+
+    def _make_json_serializable(self, obj: Any) -> Any:
+        """
+        Recursively convert non-JSON-serializable objects to serializable forms.
+
+        Handles lxml Elements and other non-serializable types that trafilatura
+        may return in its extraction results.
+
+        Args:
+            obj: Object to convert
+
+        Returns:
+            JSON-serializable version of the object
+        """
+        if isinstance(obj, _Element):
+            # Convert lxml Element to string representation
+            return str(obj.text) if obj.text else None
+        elif isinstance(obj, dict):
+            return {k: self._make_json_serializable(v) for k, v in obj.items()}
+        elif isinstance(obj, (list, tuple)):
+            return [self._make_json_serializable(item) for item in obj]
+        elif isinstance(obj, (str, int, float, bool, type(None))):
+            return obj
+        else:
+            # Fallback: convert to string
+            return str(obj)
 
     async def enrich(self, context: EnricherContext) -> EnricherResult:
         """
@@ -101,6 +128,9 @@ class TrafilaturaEnricher(BaseEnricher):
                     "Trafilatura extraction returned None for %s", context.url
                 )
                 extracted = {}
+
+            # Ensure all data is JSON-serializable (convert lxml Elements, etc.)
+            extracted = self._make_json_serializable(extracted)
 
             # Filter out None values for cleaner storage
             metadata = {k: v for k, v in extracted.items() if v is not None}
